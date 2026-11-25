@@ -2,17 +2,19 @@
 
 <img src="assets/hero.svg" width="860" alt="Shalem Raj (@Rajshalem5) — software engineer, full-stack and AI, Visakhapatnam">
 
-<img src="assets/city.svg" width="860" alt="Contributions this year drawn as a city skyline: 171 contributions over 36 active days, busiest day 34, best run 4 days">
+<sub><a href="https://rajshalem5.github.io"><b>→ the interactive version</b></a> — same data, with a console you can actually use</sub>
 
-<img src="assets/space-shooter.svg" width="860" alt="The same contribution grid as a space shooter, score 0171">
+<img src="assets/city.svg" width="860" alt="Contributions this year drawn as a city skyline: 174 contributions over 36 active days, busiest day 34, best run 4 days">
+
+<img src="assets/space-shooter.svg" width="860" alt="The same contribution grid as a space shooter, score 0174">
 
 <img src="assets/galaxy.svg" width="860" alt="Every public repository as a star, sized by its star count">
 
-<img src="assets/projects.svg" width="860" alt="Projects: POS-FOR-COLLEGE-CANTEEN, ANIMATED-PROFILE-CARD, RAG, quizlet">
+<img src="assets/projects.svg" width="860" alt="Projects: POS-FOR-COLLEGE-CANTEEN, ANIMATED-PROFILE-CARD, Rajshalem5.github.io, RAG">
 
-<sub>[POS-FOR-COLLEGE-CANTEEN](https://github.com/Rajshalem5/POS-FOR-COLLEGE-CANTEEN) · [ANIMATED-PROFILE-CARD](https://github.com/Rajshalem5/ANIMATED-PROFILE-CARD) · [RAG](https://github.com/Rajshalem5/RAG) · [quizlet](https://github.com/Rajshalem5/quizlet)</sub>
+<sub>[POS-FOR-COLLEGE-CANTEEN](https://github.com/Rajshalem5/POS-FOR-COLLEGE-CANTEEN) · [ANIMATED-PROFILE-CARD](https://github.com/Rajshalem5/ANIMATED-PROFILE-CARD) · [Rajshalem5.github.io](https://github.com/Rajshalem5/Rajshalem5.github.io) · [RAG](https://github.com/Rajshalem5/RAG)</sub>
 
-<img src="assets/snake.svg" width="860" alt="A trail through 171 contributions across 36 active days">
+<img src="assets/snake.svg" width="860" alt="A trail through 174 contributions across 36 active days">
 
 <img src="assets/resume.svg" width="860" alt="Profile: B.Tech in Information Technology at Anil Neerukonda Institute of Technology and Sciences, Visakhapatnam, CGPA 8.69 of 10, 2022 to 2026; email rajshalem72@gmail.com; president of the Entrepreneurship Club; Smart India Hackathon 2025">
 

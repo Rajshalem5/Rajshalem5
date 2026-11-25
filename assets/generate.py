@@ -25,6 +25,7 @@ from datetime import date, timedelta
 from pathlib import Path
 
 LOGIN = "Rajshalem5"
+SITE = "https://rajshalem5.github.io"
 OUT = Path(__file__).resolve().parent
 ROOT = OUT.parent
 
@@ -694,13 +695,20 @@ def build_social():
             "0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z")
     body = card(CARD_X, 22, W - 2 * CARD_X, 82, rx=22)
     body += (f'<a href="https://github.com/{LOGIN}" target="_blank">'
-             f'<rect x="341" y="40" width="178" height="46" rx="23" fill="#ffffff" fill-opacity=".05" '
+             f'<rect x="222" y="40" width="200" height="46" rx="23" fill="#ffffff" fill-opacity=".05" '
              f'stroke="{RULE}"/>'
-             f'<g transform="translate(366,56) scale(1.35)" fill="{INK}"><path d="{mark}"/></g>'
-             f'{label(396, 59, "GITHUB", INK2, 10, "1.2")}'
-             f'<text x="396" y="77" font-family="{SANS}" font-size="{T_BODY}" font-weight="700" '
-             f'fill="{INK}">@{LOGIN}</text></a>')
-    return shell(uid, H, f'GitHub @{LOGIN}', f'GitHub @{LOGIN}', body)
+             f'<g transform="translate(242,56) scale(1.2)" fill="{INK}"><path d="{mark}"/></g>'
+             f'{label(270, 59, "GITHUB", INK2, 10, "1.2")}'
+             f'<text x="270" y="77" font-family="{SANS}" font-size="{T_BODY}" font-weight="700" '
+             f'fill="{INK}">@{LOGIN}</text></a>'
+             f'<a href="{SITE}" target="_blank">'
+             f'<rect x="438" y="40" width="200" height="46" rx="23" fill="{ACCENT}" fill-opacity=".1" '
+             f'stroke="{ACCENT}" stroke-opacity=".45"/>'
+             f'<text x="456" y="72" font-family="{MONO}" font-size="17" fill="{ACCENT}">&#8599;</text>'
+             f'{label(478, 59, "INTERACTIVE", ACCENT, 10, "1.2")}'
+             f'<text x="478" y="77" font-family="{MONO}" font-size="{T_DATA}" font-weight="700" '
+             f'fill="{INK}">rajshalem5.github.io</text></a>')
+    return shell(uid, H, f'GitHub and the interactive site — {SITE}', f'GitHub @{LOGIN}', body)
 
 
 # --------------------------------------------------------------- write
@@ -748,6 +756,8 @@ def build_readme(repos, st):
         '<div align="center">\n\n'
         f'<img src="assets/hero.svg" width="860" alt="Shalem Raj (@{LOGIN}) — software engineer, '
         f'full-stack and AI, Visakhapatnam">\n\n'
+        f'<sub><a href="{SITE}"><b>\u2192 the interactive version</b></a> \u2014 same data, '
+        f'with a console you can actually use</sub>\n\n'
         f'<img src="assets/city.svg" width="860" alt="Contributions this year drawn as a city '
         f'skyline: {st["total"]} contributions over {st["active"]} active days, busiest day '
         f'{st["bestdayn"]}, best run {st["best"]} days">\n\n'
