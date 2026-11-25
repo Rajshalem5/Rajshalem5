@@ -104,24 +104,15 @@ MOTION = (
 .bar{animation:barin 1.1s cubic-bezier(.16,1,.3,1) both;transform-box:fill-box;transform-origin:left}
 @keyframes barin{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 </style>"""),
+    (("cursor",), """<style>
+.cursor{animation:blink 1.1s step-end infinite}
+@keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}}
+</style>"""),
     (("pulse",), """<style>
 .pulse{animation:pulse 2.4s ease-in-out infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
 </style>"""),
 )
-
-# final states for anyone who asked for less motion — animations off, not deleted
-REDUCED = """<style>
-@media (prefers-reduced-motion:reduce){
-.orb-a,.orb-b,.orb-c,.chip,.bld,.cell,.trail,.ship,.laser,.boom,.star,.bar,.pulse{animation:none!important}
-.cell{opacity:.85}
-.trail{stroke-dashoffset:0;opacity:.9}
-.bar{transform:none}
-.chip,.bld{opacity:1;transform:none}
-.boom{opacity:0}
-.star{opacity:.35}
-}
-</style>"""
 
 ORB = ((ACCENT, ".72"), (GREEN, ".5"), (VIOLET, ".72"), ("#22d3ee", ".5"))
 
@@ -223,8 +214,8 @@ def motion_css(body):
     used = set()
     for m in re.findall(r'class="([^"]+)"', body):
         used.update(m.split())
-    css = "".join(block for names, block in MOTION if used & set(names))
-    return css + REDUCED
+    used.update(("orb-a", "orb-b", "orb-c"))     # the chrome always carries the orbs
+    return "".join(block for names, block in MOTION if used & set(names))
 
 
 def shell(uid, h, label, title, body, defs="", head=""):
@@ -415,7 +406,7 @@ def build_projects(repos):
             f'<circle cx="378" cy="15" r="3.5" fill="{GREEN if age.endswith(("d ago", "w ago", "today")) else INK2}" '
             f'fill-opacity=".9"/>'
             f'<text x="18" y="60" font-family="{MONO}" font-size="{T_LEAD}" font-weight="700" '
-            f'fill="{INK}">{esc(name)}</text>'
+            f'fill="{INK}">{esc(name)}<tspan class="cursor" fill="{ACCENT}">_</tspan></text>'
             + (f'<text x="18" y="82" font-family="{SANS}" font-size="{T_BODY}" '
                f'fill="{INK2}">{esc(line1)}</text>' if line1 else "")
             + (f'<text x="18" y="98" font-family="{SANS}" font-size="{T_BODY}" '
@@ -579,11 +570,11 @@ def build_shooter(weeks, st):
         f'<rect class="boom" x="{GX + w * PITCH - 3}" y="{GY + d * PITCH - 3}" '
         f'width="{CELL + 6}" height="{CELL + 6}" rx="4" fill="{ACCENT}" '
         f'style="animation-delay:{(i * 1.9) % 5.5:.2f}s"/>'
-        for i, (w, d, _) in enumerate(lit[:: max(1, len(lit) // 4)][:4]))
+        for i, (w, d, _) in enumerate(lit[:: max(1, len(lit) // 7)][:6]))
     stars = "".join(
         f'<circle class="star" cx="{GX + (i * 97) % 730 + 4}" cy="{94 + (i * 53) % 116}" '
         f'r="{1 + (i % 3) * 0.5:.1f}" fill="{INK}" style="animation-delay:{i * 0.7:.1f}s"/>'
-        for i in range(12))
+        for i in range(18))
     lasers = "".join(
         f'<rect class="laser" x="{6 + i * 5}" y="196" width="2" height="16" rx="1" fill="{ACCENT}" '
         f'style="animation-delay:{i * 0.33:.2f}s"/>' for i in range(3))

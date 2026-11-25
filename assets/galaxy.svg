@@ -1,18 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="860" height="380" viewBox="0 0 860 380" role="img" aria-label="Repo galaxy — 29 repositories, 2 stars in total">
 <title>Repositories as a galaxy</title>
 <defs><linearGradient id="galaxy-bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0d1117"/><stop offset="54%" stop-color="#161b22"/><stop offset="100%" stop-color="#0d1117"/></linearGradient><radialGradient id="galaxy-o0" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#58a6ff" stop-opacity=".72"/><stop offset="58%" stop-color="#58a6ff" stop-opacity="0.18"/><stop offset="100%" stop-color="#58a6ff" stop-opacity="0"/></radialGradient><radialGradient id="galaxy-o1" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#39d353" stop-opacity=".5"/><stop offset="58%" stop-color="#39d353" stop-opacity="0.18"/><stop offset="100%" stop-color="#39d353" stop-opacity="0"/></radialGradient><radialGradient id="galaxy-o2" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#818cf8" stop-opacity=".72"/><stop offset="58%" stop-color="#818cf8" stop-opacity="0.18"/><stop offset="100%" stop-color="#818cf8" stop-opacity="0"/></radialGradient><radialGradient id="galaxy-o3" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#22d3ee" stop-opacity=".5"/><stop offset="58%" stop-color="#22d3ee" stop-opacity="0.18"/><stop offset="100%" stop-color="#22d3ee" stop-opacity="0"/></radialGradient><style>
+.orb-a{animation:fa 9s ease-in-out infinite}
+.orb-b{animation:fb 11s ease-in-out infinite 1.1s}
+.orb-c{animation:fc 13s ease-in-out infinite .6s}
+@keyframes fa{0%,100%{transform:translate(0,0);opacity:.58}50%{transform:translate(28px,-20px);opacity:.86}}
+@keyframes fb{0%,100%{transform:translate(0,0);opacity:.42}50%{transform:translate(-24px,18px);opacity:.72}}
+@keyframes fc{0%,100%{transform:translate(0,0) scale(1);opacity:.34}50%{transform:translate(18px,-12px) scale(1.18);opacity:.62}}
+</style><style>
 .star{animation:twinkle 6s ease-in-out infinite}
 @keyframes twinkle{0%,100%{opacity:.12}50%{opacity:.5}}
-</style><style>
-@media (prefers-reduced-motion:reduce){
-.orb-a,.orb-b,.orb-c,.chip,.bld,.cell,.trail,.ship,.laser,.boom,.star,.bar,.pulse{animation:none!important}
-.cell{opacity:.85}
-.trail{stroke-dashoffset:0;opacity:.9}
-.bar{transform:none}
-.chip,.bld{opacity:1;transform:none}
-.boom{opacity:0}
-.star{opacity:.35}
-}
 </style></defs>
 <rect width="860" height="380" rx="20" fill="url(#galaxy-bg)"/>
 <ellipse class="orb-a" cx="138" cy="68" rx="206" ry="175" fill="url(#galaxy-o0)"/><ellipse class="orb-b" cx="654" cy="84" rx="241" ry="160" fill="url(#galaxy-o1)"/><ellipse class="orb-c" cx="499" cy="334" rx="310" ry="129" fill="url(#galaxy-o2)"/><ellipse class="orb-b" cx="826" cy="293" rx="172" ry="160" fill="url(#galaxy-o3)"/>

@@ -2,9 +2,9 @@
 
 <img src="assets/hero.svg" width="860" alt="Shalem Raj (@Rajshalem5) — software engineer, full-stack and AI, Visakhapatnam">
 
-<img src="assets/city.svg" width="860" alt="Contributions this year drawn as a city skyline: 169 contributions over 36 active days, busiest day 34, best run 4 days">
+<img src="assets/city.svg" width="860" alt="Contributions this year drawn as a city skyline: 170 contributions over 36 active days, busiest day 34, best run 4 days">
 
-<img src="assets/space-shooter.svg" width="860" alt="The same contribution grid as a space shooter, score 0169">
+<img src="assets/space-shooter.svg" width="860" alt="The same contribution grid as a space shooter, score 0170">
 
 <img src="assets/galaxy.svg" width="860" alt="Every public repository as a star, sized by its star count">
 
@@ -12,7 +12,7 @@
 
 <sub>[POS-FOR-COLLEGE-CANTEEN](https://github.com/Rajshalem5/POS-FOR-COLLEGE-CANTEEN) · [ANIMATED-PROFILE-CARD](https://github.com/Rajshalem5/ANIMATED-PROFILE-CARD) · [RAG](https://github.com/Rajshalem5/RAG) · [quizlet](https://github.com/Rajshalem5/quizlet)</sub>
 
-<img src="assets/snake.svg" width="860" alt="A trail through 169 contributions across 36 active days">
+<img src="assets/snake.svg" width="860" alt="A trail through 170 contributions across 36 active days">
 
 <img src="assets/resume.svg" width="860" alt="Profile: B.Tech in Information Technology at Anil Neerukonda Institute of Technology and Sciences, Visakhapatnam, CGPA 8.69 of 10, 2022 to 2026; email rajshalem72@gmail.com; president of the Entrepreneurship Club; Smart India Hackathon 2025">
 
