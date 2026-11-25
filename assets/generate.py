@@ -273,13 +273,15 @@ def build_shooter(weeks, st, start, last):
 <line x1="{GX}" y1="58" x2="{W-GX}" y2="58" stroke="#ffffff" stroke-opacity=".09"/>
 {"".join(cells)}
 {"".join(hits)}
-<g class="ship" transform="translate(430 0)">
-  <rect x="-16" y="188" width="32" height="74" fill="{CYAN}" opacity=".05"/>
-  {lasers}
-  <g filter="url(#glow)">
-    <path d="M0 246 L13 272 L0 264 L-13 272 Z" fill="{CYAN}" fill-opacity=".95"/>
-    <path d="M0 252 L7 268 L-7 268 Z" fill="#e6fbff"/>
-    <circle class="muzzle" cx="0" cy="262" r="3" fill="#e6fbff"/>
+<g transform="translate(430 0)">
+  <g class="ship">
+    <rect x="-16" y="188" width="32" height="74" fill="{CYAN}" opacity=".05"/>
+    {lasers}
+    <g filter="url(#glow)">
+      <path d="M0 246 L13 272 L0 264 L-13 272 Z" fill="{CYAN}" fill-opacity=".95"/>
+      <path d="M0 252 L7 268 L-7 268 Z" fill="#e6fbff"/>
+      <circle class="muzzle" cx="0" cy="262" r="3" fill="#e6fbff"/>
+    </g>
   </g>
 </g>
 <text x="{GX}" y="308" font-family="{MONO}" font-size="10" letter-spacing="1.6" fill="{MUTED}">SCORE <tspan fill="{GREEN}">{st["total"]:04d}</tspan></text>
