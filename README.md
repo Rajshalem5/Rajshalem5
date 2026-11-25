@@ -18,9 +18,9 @@
 
 <img src="assets/resume.svg" width="860" alt="Profile: B.Tech in Information Technology at Anil Neerukonda Institute of Technology and Sciences, Visakhapatnam, CGPA 8.69 of 10, 2022 to 2026; email rajshalem72@gmail.com; president of the Entrepreneurship Club; Smart India Hackathon 2025">
 
-<img src="assets/cockpit-agent.gif" width="640" alt="Agent state — a cockpit-style status display, idling">
+<a href="https://rajshalem5.github.io/cockpit/"><img src="assets/cockpit-agent.gif" width="640" alt="Agent state — a cockpit-style status display. Click to use it."></a>
 
-<sub><a href="https://github.com/finktheartist/cockpit-ui"><b>cockpit UI</b></a> — the status display, mid-idle</sub>
+<sub><a href="https://rajshalem5.github.io/cockpit/"><b>→ play with it</b></a> — the status display is live; click through its six states</sub>
 
 <img src="assets/social.svg" width="860" alt="GitHub @Rajshalem5">
 

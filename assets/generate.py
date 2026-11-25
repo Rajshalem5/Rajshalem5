@@ -774,10 +774,10 @@ def build_readme(repos, st):
         f'Technology at Anil Neerukonda Institute of Technology and Sciences, Visakhapatnam, '
         f'CGPA 8.69 of 10, 2022 to 2026; email rajshalem72@gmail.com; president of the '
         f'Entrepreneurship Club; Smart India Hackathon 2025">\n\n'
-        f'<img src="assets/cockpit-agent.gif" width="640" alt="Agent state \u2014 a '
-        f'cockpit-style status display, idling">\n\n'
-        f'<sub><a href="https://github.com/finktheartist/cockpit-ui"><b>cockpit UI</b></a> '
-        f'\u2014 the status display, mid-idle</sub>\n\n'
+        f'<a href="{SITE}/cockpit/"><img src="assets/cockpit-agent.gif" width="640" '
+        f'alt="Agent state \u2014 a cockpit-style status display. Click to use it."></a>\n\n'
+        f'<sub><a href="{SITE}/cockpit/"><b>\u2192 play with it</b></a> \u2014 the status '
+        f'display is live; click through its six states</sub>\n\n'
         f'<img src="assets/social.svg" width="860" alt="GitHub @{LOGIN}">\n\n'
         "</div>\n" + DETAILS
     )
