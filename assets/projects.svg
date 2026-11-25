@@ -16,6 +16,9 @@
 .laser{animation:fire 1.3s linear infinite}
 .boom{animation:boom 5.5s ease-out infinite;opacity:0}
 .star{animation:twinkle 4s ease-in-out infinite}
+.bar{animation:barin 1.15s cubic-bezier(.2,.8,.2,1) both;transform-box:fill-box;transform-origin:left}
+.badge{animation:rise .6s ease-out both}
+@keyframes barin{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 @keyframes fa{0%,100%{transform:translate(0,0);opacity:.58}50%{transform:translate(28px,-20px);opacity:.86}}
 @keyframes fb{0%,100%{transform:translate(0,0);opacity:.42}50%{transform:translate(-24px,18px);opacity:.72}}
 @keyframes fc{0%,100%{transform:translate(0,0) scale(1);opacity:.34}50%{transform:translate(18px,-12px) scale(1.18);opacity:.62}}

@@ -52,6 +52,9 @@ CSS = """<style>
 .laser{animation:fire 1.3s linear infinite}
 .boom{animation:boom 5.5s ease-out infinite;opacity:0}
 .star{animation:twinkle 4s ease-in-out infinite}
+.bar{animation:barin 1.15s cubic-bezier(.2,.8,.2,1) both;transform-box:fill-box;transform-origin:left}
+.badge{animation:rise .6s ease-out both}
+@keyframes barin{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 @keyframes fa{0%,100%{transform:translate(0,0);opacity:.58}50%{transform:translate(28px,-20px);opacity:.86}}
 @keyframes fb{0%,100%{transform:translate(0,0);opacity:.42}50%{transform:translate(-24px,18px);opacity:.72}}
 @keyframes fc{0%,100%{transform:translate(0,0) scale(1);opacity:.34}50%{transform:translate(18px,-12px) scale(1.18);opacity:.62}}
@@ -388,6 +391,87 @@ def build_city(weeks, st):
                          f'{st["active"]} active days', "Contribution city", body, defs)
 
 
+# --------------------------------------------------------------- resume
+
+RESUME = {
+    "title": "Software Engineer · Full-Stack & AI",
+    "place": "VISAKHAPATNAM, INDIA",
+    "email": "rajshalem72@gmail.com",
+    # (label, number of tools listed in that resume category) — no invented ratings
+    "loadout": (("PROGRAMMING", 6), ("FRONTEND", 2), ("BACKEND", 4), ("DATA / SQL", 7),
+                ("AI / GENAI", 9), ("CLOUD / DEVOPS", 8), ("DELIVERY", 6)),
+    "education": ("B.Tech, Information Technology",
+                  "Anil Neerukonda Institute of Technology & Sciences",
+                  "2022 – 2026 · CGPA 8.69 / 10"),
+    "badges": (("PRESIDENT · ENTREPRENEURSHIP CLUB", "5+ workshops · teams of 5–10"),
+               ("SMART INDIA HACKATHON 2025", "AI & Product Innovation")),
+}
+
+
+def build_resume(profile, st):
+    uid, H = "resume", 430
+    r = RESUME
+    mx = max(n for _, n in r["loadout"])
+    bx, bw = 452, 302
+
+    body = card(28, 26, 804, 378)
+
+    # identity
+    body += (f'<text x="{GX}" y="66" font-family="{SANS}" font-size="11" font-weight="850" '
+             f'letter-spacing="3.4" fill="{ACC}">PLAYER PROFILE</text>'
+             f'<text x="{GX}" y="106" font-family="{SANS}" font-size="30" font-weight="850" '
+             f'letter-spacing="-0.8" fill="{TEXT}">{esc(profile["name"] or LOGIN)}'
+             f'<tspan class="cursor" fill="{ACC}">_</tspan></text>'
+             f'<text x="{GX}" y="130" font-family="{SANS}" font-size="13" '
+             f'fill="{MUTED}">{esc(r["title"])}</text>'
+             f'<text x="{GX}" y="152" font-family="{MONO}" font-size="10" letter-spacing="2" '
+             f'fill="{MUTED}">{r["place"]}</text>'
+             f'<text x="{GX}" y="180" font-family="{MONO}" font-size="11" '
+             f'fill="{ACC}">{r["email"]}</text>'
+             f'<text x="{GX}" y="198" font-family="{MONO}" font-size="11" '
+             f'fill="{ACC}">github.com/{LOGIN}</text>'
+             f'<line x1="{GX}" y1="218" x2="{GX + 330}" y2="218" stroke="{TEXT}" '
+             f'stroke-opacity=".12"/>'
+             f'<text x="{GX}" y="244" font-family="{SANS}" font-size="10" font-weight="700" '
+             f'letter-spacing="2.2" fill="{MUTED}">EDUCATION</text>'
+             f'<text x="{GX}" y="268" font-family="{SANS}" font-size="13" font-weight="700" '
+             f'fill="{TEXT}">{esc(r["education"][0])}</text>'
+             f'<text x="{GX}" y="286" font-family="{SANS}" font-size="11" '
+             f'fill="{MUTED}">{esc(fit(r["education"][1], 52))}</text>'
+             f'<text x="{GX}" y="306" font-family="{MONO}" font-size="10.5" '
+             f'fill="{ACC}">{r["education"][2]}</text>')
+
+    # loadout bars
+    body += (f'<text x="{bx}" y="66" font-family="{SANS}" font-size="10" font-weight="700" '
+             f'letter-spacing="2.2" fill="{MUTED}">LOADOUT · TOOLS PER STACK</text>')
+    for i, (label, n) in enumerate(r["loadout"]):
+        y = 96 + i * 30
+        w = bw * n / mx
+        body += (f'<text x="{bx}" y="{y}" font-family="{MONO}" font-size="10.5" '
+                 f'letter-spacing="1.6" fill="{TEXT}">{label}</text>'
+                 f'<text x="{bx + bw + 42}" y="{y}" text-anchor="end" font-family="{MONO}" '
+                 f'font-size="11" fill="{ACC}">{n:02d}</text>'
+                 f'<rect x="{bx}" y="{y + 7}" width="{bw}" height="6" rx="3" fill="#ffffff" '
+                 f'fill-opacity=".06"/>'
+                 f'<rect class="bar" x="{bx}" y="{y + 7}" width="{w:.0f}" height="6" rx="3" '
+                 f'fill="{ACC}" fill-opacity="{0.55 + 0.05 * n:.2f}" '
+                 f'style="animation-delay:{0.15 + i * 0.08:.2f}s"/>')
+
+    # badges
+    for i, (head, sub) in enumerate(r["badges"]):
+        x = GX + i * 396
+        body += (f'<g class="badge" style="animation-delay:{0.9 + i * 0.12:.2f}s">'
+                 f'<rect x="{x}" y="330" width="380" height="46" rx="12" fill="{ACC}" '
+                 f'fill-opacity=".07" stroke="{ACC}" stroke-opacity=".35"/>'
+                 f'<text x="{x + 16}" y="350" font-family="{MONO}" font-size="10" '
+                 f'letter-spacing="1.4" fill="{TEXT}">{esc(head)}</text>'
+                 f'<text x="{x + 16}" y="366" font-family="{MONO}" font-size="10" '
+                 f'fill="{MUTED}">{esc(sub)}</text></g>')
+
+    return shell(uid, H, f'{profile["name"] or LOGIN} — player profile',
+                 "Player profile", body)
+
+
 # --------------------------------------------------------------- galaxy
 
 GAL_CX, GAL_CY = 566, 198
@@ -645,9 +729,50 @@ def build_readme(repos, st):
         f'sized by its stars">\n\n'
         f'<img src="assets/projects.svg" width="860" alt="Projects">\n\n'
         f"<sub>{links}</sub>\n\n"
+        f'<img src="assets/snake.svg" width="860" alt="Snake trail — {st["total"]} contributions, '
+        f'best run {st["best"]} days">\n\n'
+        f'<img src="assets/resume.svg" width="860" alt="Player profile — skills, education, '
+        f'leadership">\n\n'
         f'<img src="assets/social.svg" width="860" alt="GitHub @{LOGIN}">\n\n'
-        "</div>\n"
+        "</div>\n" + DETAILS
     )
+
+
+DETAILS = """
+<details>
+<summary><b>▸ EXPERIENCE</b> — 2 roles, expand</summary>
+
+**Full Stack Engineer** · Aegion Dynamic Solutions · Jul 2026 – present
+
+- **AnthyOS** — CI/CD translation platform: converts TeamCity and Jenkins pipelines into equivalent GitHub Actions workflows; built the companion desktop app `anthyos-desktop`.
+- Pipeline work cut execution from `16m22s` to `10m32s` and cost per run from `$1.26` to `$0.22`.
+- **Ruchi** — AI voice kitchen companion: voice interaction workflows, stateful multi-step agents on LangGraph, and a TTS cache that serves audio in ~0 ms against ~1200 ms for fresh synthesis.
+- Requirement discussions, technical documentation, MVP builds and product demos with stakeholders.
+
+**Python Full Stack Developer Intern** · Coastal Seven Technologies · Apr 2026
+
+- **Career Portal** — React, Flask, MySQL and REST APIs; resume upload, parsing, structured profile extraction, AI resume scoring and candidate-job matching.
+- **Hiring Factory** — Next.js, FastAPI, Supabase, PostgreSQL with JWT auth and RBAC across recruiter, admin, HR, interviewer and candidate roles.
+
+</details>
+
+<details>
+<summary><b>▸ PROJECTS</b> — expand</summary>
+
+- **AnySite** — AI tools discovery platform (React, Flask, PostgreSQL, n8n). RAG recommendation workflow: a user's problem becomes a tool sequence.
+- **IoT Water Quality Monitor** — ESP8266 + TDS sensors, ThingSpeak dashboards, IFTTT alerts.
+- **Library Management System** — MySQL schema and operations for a second-year academic project.
+
+</details>
+
+<details>
+<summary><b>▸ LEADERSHIP</b> — expand</summary>
+
+- **President, Entrepreneurship Club** (2024–2025) — ran 5+ workshops on innovation, startup execution and design thinking; led teams of 5–10.
+- **Smart India Hackathon 2025** — AI and Product Innovation category.
+
+</details>
+"""
 
 
 def main():
@@ -683,6 +808,8 @@ def main():
     (OUT / "space-shooter.svg").write_text(build_shooter(weeks, st, start, last), encoding="utf-8")
     (OUT / "galaxy.svg").write_text(build_galaxy(live, top_langs, profile), encoding="utf-8")
     (OUT / "projects.svg").write_text(build_projects(picks, top_langs), encoding="utf-8")
+    (OUT / "snake.svg").write_text(build_snake(weeks, st, start, last), encoding="utf-8")
+    (OUT / "resume.svg").write_text(build_resume(profile, st), encoding="utf-8")
     (OUT / "social.svg").write_text(build_social(), encoding="utf-8")
     (ROOT / "README.md").write_text(build_readme(picks, st), encoding="utf-8")
 
