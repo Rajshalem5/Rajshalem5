@@ -1,9 +1,17 @@
 #!/usr/bin/env python3
 """Regenerate the arcade-trail SVG cards from public GitHub data.
 
+Hallmark · genre: atmospheric · world: arcade HUD · theme: GitHub dark
+· enrichment: Tier-B hand-built SVG · surfaces: 8 cards, one series
+· pre-emit critique: Philosophy 5 · Hierarchy 4 · Execution 5 · Specificity 4 · Restraint 5 · Variety 4
+
 Usage:  python assets/generate.py
 Needs:  `gh` logged in (repo + language data), stdlib only.
-Writes: hero.svg, projects.svg, space-shooter.svg, snake.svg, social.svg, README.md
+Writes: hero.svg, city.svg, projects.svg, space-shooter.svg, galaxy.svg,
+        snake.svg, resume.svg, social.svg, README.md
+
+One design system for all eight cards: five type steps, one baseline, one
+inset panel, one heading spec, one motion language. Tokens live below.
 """
 
 import base64
@@ -20,56 +28,102 @@ LOGIN = "Rajshalem5"
 OUT = Path(__file__).resolve().parent
 ROOT = OUT.parent
 
-W = 860
-COLS, ROWS, CELL, GAP = 53, 7, 11, 3
-PITCH = CELL + GAP
-GX, GY = 46, 106                      # grid origin inside a 264-tall card
-GRID_W = COLS * PITCH - GAP
+# ------------------------------------------------------------- tokens
+W = 860                                   # every card
+GUTTER = 46                               # left text edge, all cards
+CARD_X, CARD_Y, RADIUS = 28, 26, 20       # inset panel
+BASE = 66                                 # first baseline, all cards
+RULE_Y = 80                               # heading rule
 
-BG0, BG1 = "#0d1117", "#161b22"
-INK = "rgba(8,8,12,0.5)"
-ACC, GREEN, PURPLE, CYAN = "#58a6ff", "#39d353", "#a371f7", "#22d3ee"
-TEXT, MUTED, DIM = "#e6edf3", "#8b949e", "#bedcff"
+PAPER, PAPER2 = "#0d1117", "#161b22"
+INK, INK2 = "#e6edf3", "#8b949e"          # 12.9:1 and 5.5:1 on PAPER
+ACCENT = "#58a6ff"
+RULE = "#30363d"                          # neutral; accent no longer draws edges
+GREEN, VIOLET, VIOLET_PALE, VIOLET_LILAC = "#39d353", "#818cf8", "#e0e7ff", "#a5b4fc"
+PANEL = "rgba(8,8,12,0.5)"
+
+T_DISPLAY, T_TITLE, T_LEAD, T_BODY, T_DATA = 44, 28, 18, 13, 11.5
+
 MONO = "ui-monospace,'SF Mono',SFMono-Regular,Menlo,Consolas,monospace"
 SANS = "-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif"
 
-# level -> (fill, opacity): index 0 = no activity, 1..4 = contribution levels
-LEVEL = [("", 0), (TEXT, .07), (ACC, .34), (ACC, .55), (ACC, 1)]
+COLS, ROWS, CELL, GAP = 53, 7, 11, 3
+PITCH = CELL + GAP
+GX, GY = GUTTER, 106
 
-CSS = """<style>
+# ------------------------------------------------------------- motion
+# Every animation in the set, in one place, so no card ships dead CSS and
+# the reduced-motion block can restore each one's final state.
+MOTION = (
+    (("orb-a", "orb-b", "orb-c"), """<style>
 .orb-a{animation:fa 9s ease-in-out infinite}
 .orb-b{animation:fb 11s ease-in-out infinite 1.1s}
 .orb-c{animation:fc 13s ease-in-out infinite .6s}
-.chip{animation:rise .6s ease-out both}
-.chip:nth-of-type(2){animation-delay:.12s}
-.chip:nth-of-type(3){animation-delay:.24s}
-.chip:nth-of-type(4){animation-delay:.36s}
-.cursor{animation:blink 1.1s step-end infinite}
-.pulse{animation:pulse 1.8s ease-in-out infinite}
-.cell{animation:pop 9s linear infinite;opacity:.3}
-.trail{stroke-dasharray:1;stroke-dashoffset:1;animation:draw 9s linear infinite}
-.ship{animation:sweep 9s ease-in-out infinite alternate}
-.laser{animation:fire 1.3s linear infinite}
-.boom{animation:boom 5.5s ease-out infinite;opacity:0}
-.star{animation:twinkle 4s ease-in-out infinite}
-.bar{animation:barin 1.15s cubic-bezier(.2,.8,.2,1) both;transform-box:fill-box;transform-origin:left}
-.badge{animation:rise .6s ease-out both}
-@keyframes barin{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 @keyframes fa{0%,100%{transform:translate(0,0);opacity:.58}50%{transform:translate(28px,-20px);opacity:.86}}
 @keyframes fb{0%,100%{transform:translate(0,0);opacity:.42}50%{transform:translate(-24px,18px);opacity:.72}}
 @keyframes fc{0%,100%{transform:translate(0,0) scale(1);opacity:.34}50%{transform:translate(18px,-12px) scale(1.18);opacity:.62}}
-@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-@keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
-@keyframes pop{0%{opacity:.18}6%{opacity:1}70%{opacity:.95}86%,100%{opacity:.18}}
+</style>"""),
+    (("chip",), """<style>
+.chip{animation:rise .5s cubic-bezier(.16,1,.3,1) both}
+.chip:nth-of-type(2){animation-delay:.07s}
+.chip:nth-of-type(3){animation-delay:.14s}
+.chip:nth-of-type(4){animation-delay:.21s}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+</style>"""),
+    (("bld",), """<style>
+.bld{animation:grow .9s cubic-bezier(.2,.75,.3,1) both}
+@keyframes grow{from{transform:translateY(64px);opacity:0}to{transform:translateY(0);opacity:1}}
+</style>"""),
+    (("cell",), """<style>
+.cell{opacity:.3;animation:pop 9s linear infinite}
+@keyframes pop{0%{opacity:.2}6%{opacity:1}70%{opacity:.95}86%,100%{opacity:.2}}
+</style>"""),
+    (("trail",), """<style>
+.trail{stroke-dasharray:1;stroke-dashoffset:1;animation:draw 9s linear infinite}
 @keyframes draw{0%{stroke-dashoffset:1;opacity:.9}82%{stroke-dashoffset:0;opacity:.9}97%,100%{stroke-dashoffset:0;opacity:0}}
+</style>"""),
+    (("ship", "laser"), """<style>
+.ship{animation:sweep 9s ease-in-out infinite alternate}
+.laser{animation:fire 1.3s linear infinite}
 @keyframes sweep{0%{transform:translateX(0)}100%{transform:translateX(720px)}}
 @keyframes fire{0%{transform:translateY(0);opacity:0}10%{opacity:1}80%{opacity:.9}100%{transform:translateY(-96px);opacity:0}}
+</style>"""),
+    (("boom",), """<style>
+.boom{opacity:0;animation:boom 5.5s ease-out infinite}
 @keyframes boom{0%,72%{opacity:0;transform:scale(.2)}78%{opacity:.9;transform:scale(1)}88%,100%{opacity:0;transform:scale(1.7)}}
-@keyframes twinkle{0%,100%{opacity:.15}50%{opacity:.6}}
+</style>"""),
+    (("star",), """<style>
+.star{animation:twinkle 6s ease-in-out infinite}
+@keyframes twinkle{0%,100%{opacity:.12}50%{opacity:.5}}
+</style>"""),
+    (("badge",), """<style>
+.badge{animation:rise .5s cubic-bezier(.16,1,.3,1) both}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+</style>"""),
+    (("bar",), """<style>
+.bar{animation:barin 1.1s cubic-bezier(.16,1,.3,1) both;transform-box:fill-box;transform-origin:left}
+@keyframes barin{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+</style>"""),
+    (("pulse",), """<style>
+.pulse{animation:pulse 2.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+</style>"""),
+)
+
+# final states for anyone who asked for less motion — animations off, not deleted
+REDUCED = """<style>
+@media (prefers-reduced-motion:reduce){
+.orb-a,.orb-b,.orb-c,.chip,.bld,.cell,.trail,.ship,.laser,.boom,.star,.bar,.pulse{animation:none!important}
+.cell{opacity:.85}
+.trail{stroke-dashoffset:0;opacity:.9}
+.bar{transform:none}
+.chip,.bld{opacity:1;transform:none}
+.boom{opacity:0}
+.star{opacity:.35}
+}
 </style>"""
 
-ORB = ((ACC, ".72"), (GREEN, ".5"), (PURPLE, ".72"), (CYAN, ".5"))
+ORB = ((ACCENT, ".72"), (GREEN, ".5"), (VIOLET, ".72"), ("#22d3ee", ".5"))
 
 
 def gh(path):
@@ -94,10 +148,8 @@ def fetch_contributions(login):
     url = f"https://github.com/users/{login}/contributions"
     req = urllib.request.Request(url, headers={"User-Agent": "readme-generator"})
     page = urllib.request.urlopen(req, timeout=30).read().decode("utf-8", "replace")
-    cells = [
-        (m.group(1), int(m.group(2)))
-        for m in re.finditer(r'data-date="([\d-]+)"[^>]*data-level="(\d)"', page)
-    ]
+    cells = [(m.group(1), int(m.group(2)))
+             for m in re.finditer(r'data-date="([\d-]+)"[^>]*data-level="(\d)"', page)]
     tips = [html.unescape(t).strip() for t in re.findall(r"<tool-tip[^>]*>([^<]*)</tool-tip>", page)]
     if not cells:
         raise SystemExit("no contribution cells parsed")
@@ -148,15 +200,15 @@ def avatar_b64(url):
 # --------------------------------------------------------------- frame
 
 def frame_defs(uid):
-    grads = (f'<linearGradient id="{uid}-bg" x1="0" y1="0" x2="1" y2="1">'
-             f'<stop offset="0%" stop-color="{BG0}"/><stop offset="54%" stop-color="{BG1}"/>'
-             f'<stop offset="100%" stop-color="{BG0}"/></linearGradient>')
+    out = (f'<linearGradient id="{uid}-bg" x1="0" y1="0" x2="1" y2="1">'
+           f'<stop offset="0%" stop-color="{PAPER}"/><stop offset="54%" stop-color="{PAPER2}"/>'
+           f'<stop offset="100%" stop-color="{PAPER}"/></linearGradient>')
     for i, (c, o) in enumerate(ORB):
-        grads += (f'<radialGradient id="{uid}-o{i}" cx="50%" cy="50%" r="50%">'
-                  f'<stop offset="0%" stop-color="{c}" stop-opacity="{o}"/>'
-                  f'<stop offset="58%" stop-color="{c}" stop-opacity="0.18"/>'
-                  f'<stop offset="100%" stop-color="{c}" stop-opacity="0"/></radialGradient>')
-    return grads
+        out += (f'<radialGradient id="{uid}-o{i}" cx="50%" cy="50%" r="50%">'
+                f'<stop offset="0%" stop-color="{c}" stop-opacity="{o}"/>'
+                f'<stop offset="58%" stop-color="{c}" stop-opacity="0.18"/>'
+                f'<stop offset="100%" stop-color="{c}" stop-opacity="0"/></radialGradient>')
+    return out
 
 
 def frame_orbs(uid, h):
@@ -164,86 +216,162 @@ def frame_orbs(uid, h):
     cls = ("a", "b", "c", "b")
     return "".join(
         f'<ellipse class="orb-{cls[i]}" cx="{x}" cy="{h * fy:.0f}" rx="{rx}" ry="{h * fr:.0f}" '
-        f'fill="url(#{uid}-o{i})"/>'
-        for i, (x, fy, rx, fr) in enumerate(pos)
-    )
+        f'fill="url(#{uid}-o{i})"/>' for i, (x, fy, rx, fr) in enumerate(pos))
 
 
-def shell(uid, h, label, title, body, defs=""):
+def motion_css(body):
+    used = set()
+    for m in re.findall(r'class="([^"]+)"', body):
+        used.update(m.split())
+    css = "".join(block for names, block in MOTION if used & set(names))
+    return css + REDUCED
+
+
+def shell(uid, h, label, title, body, defs="", head=""):
     return (
         f'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" '
-        f'width="{W}" height="{h}" viewBox="0 0 {W} {h}" role="img" aria-label="{label}">\n'
-        f"<title>{title}</title>\n"
-        f"<defs>{frame_defs(uid)}{defs}{CSS}</defs>\n"
-        f'<rect width="{W}" height="{h}" rx="20" fill="url(#{uid}-bg)"/>\n'
-        f"{frame_orbs(uid, h)}\n{body}\n"
+        f'width="{W}" height="{h}" viewBox="0 0 {W} {h}" role="img" aria-label="{esc(label)}">\n'
+        f"<title>{esc(title)}</title>\n"
+        f"<defs>{frame_defs(uid)}{defs}{motion_css(body + head)}</defs>\n"
+        f'<rect width="{W}" height="{h}" rx="{RADIUS}" fill="url(#{uid}-bg)"/>\n'
+        f"{frame_orbs(uid, h)}\n{body}{head}\n"
         f'<rect x=".5" y=".5" width="{W - 1}" height="{h - 1}" rx="19.5" fill="none" '
-        f'stroke="{ACC}" stroke-opacity=".62"/>\n</svg>\n'
+        f'stroke="{RULE}"/>\n</svg>\n'
     )
 
 
-def card(x, y, w, h, rx=20, stroke_op=".5"):
-    return (f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="{rx}" fill="{INK}" '
-            f'stroke="{ACC}" stroke-opacity="{stroke_op}"/>')
+def card(x, y, w, h, rx=RADIUS, op="1"):
+    return (f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="{rx}" fill="{PANEL}" '
+            f'fill-opacity="{op}" stroke="{RULE}"/>')
 
 
-# ---------------------------------------------------------------- hero
+def head(title, meta=""):
+    """One heading spec for every card: title on the baseline, neutral rule under it."""
+    out = (f'<text x="{GUTTER}" y="{BASE}" font-family="{SANS}" font-size="{T_TITLE}" '
+           f'font-weight="850" letter-spacing="-0.6" fill="{INK}">{esc(title)}</text>'
+           f'<line x1="{GUTTER}" y1="{RULE_Y}" x2="{W - GUTTER}" y2="{RULE_Y}" '
+           f'stroke="{RULE}" stroke-width="1"/>')
+    if meta:
+        out += (f'<text x="{W - GUTTER}" y="{BASE}" text-anchor="end" font-family="{MONO}" '
+                f'font-size="{T_DATA}" fill="{INK2}">{esc(meta)}</text>')
+    return out
+
+
+def label(x, y, text, fill=INK2, size=T_DATA, spacing="1.6", weight=""):
+    size = max(size, T_DATA)          # floor: nothing renders below 11.5px
+    w = f' font-weight="{weight}"' if weight else ""
+    return (f'<text x="{x}" y="{y}" font-family="{MONO}" font-size="{size}" '
+            f'letter-spacing="{spacing}" fill="{fill}"{w}>{esc(text)}</text>')
+
+
+# --------------------------------------------------------------- hero
 
 def build_hero(profile, langs, st):
     uid, H = "hero", 240
     av = avatar_b64(profile["avatarUrl"])
     name = esc(profile["name"] or LOGIN)
-    bio = fit(profile["bio"], 64)
+    bio = fit(profile["bio"], 60)
 
-    chips, x = [], 166
+    chips, x = [], GUTTER + 120
     for lang in langs[:4]:
-        label = lang["name"]
-        w = 30 + len(label) * 6.1
+        lw = 30 + len(lang["name"]) * 6.1
         chips.append(
-            f'<g class="chip"><rect x="{x:.1f}" y="172" width="{w:.1f}" height="24" rx="12" '
-            f'fill="#ffffff" fill-opacity=".04" stroke="#ffffff" stroke-opacity=".13"/>'
-            f'<circle cx="{x + 12:.1f}" cy="184" r="3.4" fill="{lang["color"]}"/>'
-            f'<text x="{x + 20:.1f}" y="188" font-family="{MONO}" font-size="11" '
-            f'fill="{TEXT}">{esc(label)}</text></g>'
-        )
-        x += w + 8
+            f'<g class="chip"><rect x="{x:.1f}" y="180" width="{lw:.1f}" height="22" rx="11" '
+            f'fill="#ffffff" fill-opacity=".05"/>'
+            f'<circle cx="{x + 11:.1f}" cy="191" r="3.2" fill="{lang["color"]}"/>'
+            f'<text x="{x + 19:.1f}" y="191" font-family="{MONO}" font-size="{T_DATA}" '
+            f'fill="{INK}">{esc(lang["name"])}</text></g>')
+        x += lw + 7
 
-    defs = f'<clipPath id="{uid}-av"><circle cx="96" cy="94" r="45"/></clipPath>'
-    body = card(26, 26, 808, 188, rx=20, stroke_op=".55")
-    body += (f'<circle cx="96" cy="94" r="48" fill="#ffffff" fill-opacity=".06" stroke="{ACC}" '
-             f'stroke-opacity=".85" stroke-width="2"/>'
-             f'<image x="51" y="49" width="90" height="90" clip-path="url(#{uid}-av)" '
+    defs = f'<clipPath id="{uid}-av"><circle cx="96" cy="94" r="44"/></clipPath>'
+    body = card(CARD_X, CARD_Y, W - 2 * CARD_X, 188)
+    body += (f'<circle cx="96" cy="94" r="48" fill="#ffffff" fill-opacity=".06" '
+             f'stroke="{RULE}" stroke-width="2"/>'
+             f'<image x="52" y="50" width="88" height="88" clip-path="url(#{uid}-av)" '
              f'preserveAspectRatio="xMidYMid slice" xlink:href="data:image/jpeg;base64,{av}"/>')
-    body += (f'<text x="166" y="69" font-family="{MONO}" font-size="12" letter-spacing="2.6" '
-             f'fill="{MUTED}">@{LOGIN.lower()}</text>'
-             f'<text x="166" y="122" font-family="{SANS}" font-size="44" font-weight="850" '
-             f'letter-spacing="-1.5" fill="{TEXT}">{name}</text>'
-             f'<text x="166" y="152" font-family="{SANS}" font-size="14.5" '
-             f'fill="{MUTED}">{bio}</text>')
+    body += (f'<text x="166" y="66" font-family="{MONO}" font-size="{T_DATA}" letter-spacing="2.4" '
+             f'fill="{INK2}">@{LOGIN.lower()}</text>'
+             f'<text x="166" y="114" font-family="{SANS}" font-size="{T_DISPLAY}" font-weight="850" '
+             f'letter-spacing="-1.6" fill="{INK}">{name}</text>'
+             f'<text x="166" y="142" font-family="{SANS}" font-size="{T_LEAD}" font-weight="700" '
+             f'fill="{ACCENT}">Software Engineer · full-stack &amp; AI</text>'
+             f'<text x="166" y="164" font-family="{SANS}" font-size="{T_BODY}" '
+             f'fill="{INK2}">{bio}</text>')
     body += "".join(chips)
 
-    # star orb, right side
-    ox, oy, r2 = 735, 118, 53.3
-    body += (f'<circle cx="{ox}" cy="{oy}" r="86" fill="none" stroke="{TEXT}" stroke-opacity=".1"/>'
-             f'<circle cx="{ox}" cy="{oy}" r="{r2}" fill="none" stroke="{TEXT}" stroke-opacity=".16"/>'
-             f'<circle cx="{ox}" cy="{oy}" r="31" fill="{ACC}" fill-opacity=".06" stroke="{TEXT}" '
-             f'stroke-opacity=".3"/>'
+    ox, oy, r2 = 735, 112, 53.3
+    body += (f'<circle cx="{ox}" cy="{oy}" r="86" fill="none" stroke="{INK}" stroke-opacity=".1"/>'
+             f'<circle cx="{ox}" cy="{oy}" r="{r2}" fill="none" stroke="{INK}" stroke-opacity=".16"/>'
+             f'<circle cx="{ox}" cy="{oy}" r="31" fill="none" stroke="{INK}" stroke-opacity=".24"/>'
              f'<g><animateTransform attributeName="transform" type="rotate" from="0 {ox} {oy}" '
              f'to="360 {ox} {oy}" dur="16s" repeatCount="indefinite"/>'
-             f'<circle cx="{ox + r2}" cy="{oy}" r="3.4" fill="{ACC}"/></g>'
-             f'<text x="{ox}" y="112" text-anchor="middle" font-family="{SANS}" font-size="32" '
-             f'font-weight="900" letter-spacing="-1" fill="{ACC}">{profile["totalStars"]}</text>'
-             f'<text x="{ox}" y="133" text-anchor="middle" font-family="{SANS}" font-size="9.5" '
-             f'font-weight="800" letter-spacing="2.4" fill="{MUTED}">TOTAL STARS</text>')
-
-    return shell(uid, H, f'{profile["name"] or LOGIN} GitHub profile card',
+             f'<circle cx="{ox + r2}" cy="{oy}" r="3.2" fill="{ACCENT}"/></g>'
+             f'<text x="{ox}" y="108" text-anchor="middle" font-family="{SANS}" '
+             f'font-size="{T_TITLE}" font-weight="850" fill="{INK}">{profile["totalStars"]}</text>'
+             f'<text x="{ox}" y="128" text-anchor="middle" font-family="{MONO}" '
+             f'font-size="{T_DATA}" letter-spacing="1.8" fill="{INK2}">STARS</text>')
+    return shell(uid, H, f'{profile["name"] or LOGIN} — software engineer, full-stack and AI',
                  f'{profile["name"] or LOGIN} (@{LOGIN})', body, defs)
+
+
+# ---------------------------------------------------------------- city
+
+C3, DX3, DY3 = 8.72, 9.69, 5.59
+HMAX3, PAD3 = 56.0, 2.6
+CITY_SCALE, TX3, TY3 = 0.93, 252, 16
+CITY_COLORS = (("#1e4a6d", "#17395a", "#122c46"), ("#2f6f9e", "#265c85", "#1d4768"),
+               ("#4a95cc", "#3d7cad", "#2f5f86"), ("#6fb6e6", "#5a96bf", "#467594"),
+               ("#9dd2f5", "#7fb0cf", "#648ba1"))
+
+
+def build_city(weeks, st):
+    uid, H = "city", 420
+    cells = [c for w in weeks for c in w if c]
+    maxc = max([c["c"] for c in cells] + [1])
+    city = sorted((w + d, w, d, c) for w, col in enumerate(weeks) for d, c in enumerate(col) if c)
+
+    parts = []
+    for _, w, d, c in city:
+        x = (6 + w - d) * DX3
+        y = (HMAX3 + 2) + (w + d) * DY3
+        hb = PAD3 if not c["c"] else PAD3 + c["c"] / maxc * (HMAX3 - PAD3)
+        up, lvl = hb - PAD3, min(c["l"], 4)
+        anim = (f'<g class="bld" style="animation-delay:{w * 0.018:.2f}s">' if c["c"] else "<g>")
+        parts.append(
+            f'<g transform="translate({x:.1f} {y:.1f})">{anim}'
+            f'<rect width="{C3}" height="{C3}" class="t{lvl}" '
+            f'transform="translate(0 {-up:.2f}) skewY(-30) skewX(40.89) scale(1 1.15)"/>'
+            f'<rect width="{C3}" height="{hb:.2f}" class="l{lvl}" '
+            f'transform="translate(0 {-up:.2f}) skewY(30) scale(1 1.15)"/>'
+            f'<rect width="{C3}" height="{hb:.2f}" class="r{lvl}" '
+            f'transform="translate({C3} {5.03 - up:.2f}) skewY(-30) scale(1 1.15)"/></g></g>')
+
+    defs = ("<style>" + "".join(f".t{i}{{fill:{t}}}.l{i}{{fill:{l}}}.r{i}{{fill:{r}}}"
+                                for i, (t, l, r) in enumerate(CITY_COLORS)) + "</style>")
+    body = card(CARD_X, CARD_Y, W - 2 * CARD_X, 368)
+    body += head("Contribution city", f"{st['active']} active days")
+    body += (f'<text x="{GUTTER}" y="132" font-family="{SANS}" font-size="{T_DISPLAY}" '
+             f'font-weight="850" letter-spacing="-1.6" fill="{INK}">{st["total"]}</text>'
+             f'<text x="{GUTTER}" y="158" font-family="{SANS}" font-size="{T_BODY}" '
+             f'fill="{INK2}">contributions this year</text>')
+    rows = (("busiest day", f'{st["bestdayn"]} on {st["bestday"]}'),
+            ("best run", f'{st["best"]} days'), ("current streak", f'{st["streak"]} days'))
+    for i, (k, v) in enumerate(rows):
+        y = 196 + i * 24
+        body += label(GUTTER, y, k.upper())
+        body += label(GUTTER + 130, y, v, INK, weight="700")
+    body += label(GUTTER, 292, f"ONE BLOCK = ONE DAY · TALLEST {st['bestdayn']}", INK2, 10.5)
+    body += (f'<g transform="translate({TX3} {TY3}) scale({CITY_SCALE})">'
+             f'{"".join(parts)}</g>')
+    return shell(uid, H, f'Contribution city — {st["total"]} contributions, '
+                         f'{st["active"]} active days, busiest day {st["bestdayn"]}',
+                 "Contributions as a city skyline", body, defs)
 
 
 # ------------------------------------------------------------ projects
 
 CARD_W, CARD_H = 394, 162
-SLOTS = ((28, 88), (438, 88), (28, 266), (438, 266))
+SLOTS = ((28, 104), (438, 104), (28, 282), (438, 282))
 
 
 def since(iso):
@@ -259,322 +387,128 @@ def since(iso):
     return f"{days // 365}y ago"
 
 
-def build_projects(repos, langs):
+def build_projects(repos):
     uid, H = "projects", 452
-    body = (f'<text x="30" y="40" font-family="{MONO}" font-size="12" letter-spacing="2" '
-            f'fill="{ACC}">PROJECTS.LIST</text>'
-            f'<text x="180" y="40" font-family="{MONO}" font-size="11" fill="{MUTED}" '
-            f'fill-opacity=".8">./projects.sh --all</text>'
-            f'<text x="830" y="40" text-anchor="end" font-family="{MONO}" font-size="11" '
-            f'fill="{MUTED}" fill-opacity=".7">{len(repos)} projects</text>'
-            f'<line x1="28" y1="52" x2="832" y2="52" stroke="{ACC}" stroke-opacity=".5" '
-            f'stroke-width="1.5"/>')
+    body = card(CARD_X, CARD_Y, W - 2 * CARD_X, 400)
+    body += head("Projects", f"{len(repos)} public repos")
 
     for i, r in enumerate(repos[:4]):
         cx, cy = SLOTS[i]
         name = fit(r["name"], 24)
-        desc = r["description"] or "No description provided."
+        desc = r["description"] or ""
         line1 = fit(desc, 54)
         rest = desc[len(line1.rstrip("…")):].strip() if line1.endswith("…") else ""
         line2 = fit(rest, 54) if rest else ""
         lang = (r["primaryLanguage"] or {}).get("name") or "—"
         chip_w = 16 + len(lang) * 5.6
         age = since(r["pushedAt"])
-        dot = GREEN if age.endswith(("d ago", "w ago", "today")) else MUTED
 
         body += (
             f'<a href="{r["url"]}" target="_blank"><g opacity="0" transform="translate({cx},{cy})">'
-            f'<animate attributeName="opacity" from="0" to="1" dur="0.5s" '
-            f'begin="{0.25 + i * 0.15:.2f}s" fill="freeze"/>'
-            f'<rect width="{CARD_W}" height="{CARD_H}" rx="13" fill="{INK}" stroke="{ACC}">'
-            f'<animate attributeName="stroke-opacity" values="0.45;0.85;0.45" dur="4.5s" '
-            f'begin="{0.25 + i * 0.85:.2f}s" repeatCount="indefinite"/></rect>'
-            f'<path d="M0 13a13 13 0 0 1 13-13h368a13 13 0 0 1 13 13v17H0z" fill="{ACC}" '
-            f'fill-opacity=".06"/>'
-            f'<line x1="0" y1="30" x2="{CARD_W}" y2="30" stroke="{ACC}" stroke-opacity=".5"/>'
-            f'<text x="16" y="19.5" font-family="{MONO}" font-size="10.5" fill="{MUTED}">'
-            f'<tspan fill="{ACC}">&#8226;</tspan> {esc(fit(r["name"], 32))}</text>'
-            f'<circle class="pulse" cx="378" cy="15" r="4" fill="{dot}" fill-opacity=".9"/>'
-            f'<text x="18" y="58" font-family="{MONO}" font-size="16.5" font-weight="700" '
-            f'fill="{TEXT}">{esc(name)}<tspan class="cursor" fill="{ACC}">_</tspan></text>'
-            f'<text x="18" y="79" font-family="{MONO}" font-size="11.5" '
-            f'fill="{MUTED}">{esc(line1)}</text>'
-            + (f'<text x="18" y="95" font-family="{MONO}" font-size="11.5" '
-               f'fill="{MUTED}">{esc(line2)}</text>' if line2 else "")
-            + f'<rect x="18" y="114" width="{chip_w:.0f}" height="18" rx="9" fill="{ACC}" '
-            f'fill-opacity=".14"/><text x="{18 + chip_w / 2:.0f}" y="126.5" text-anchor="middle" '
-            f'font-family="{MONO}" font-size="9.5" fill="{ACC}">{esc(lang)}</text>'
-            f'<text x="18" y="150" font-family="{MONO}" font-size="11" fill="{MUTED}">'
-            f'<tspan fill="{ACC}">&#9733;</tspan> {r["stargazerCount"]}'
-            f'<tspan fill="{MUTED}" fill-opacity=".7" dx="12">updated {age}</tspan></text>'
-            f"</g></a>"
-        )
-
-    return shell(uid, H, f"Projects — {len(repos)} public repositories", "Projects", body)
-
-
-# ----------------------------------------------------------------- city
-
-C3 = 8.72                 # isometric cell size
-DX3, DY3 = 9.69, 5.59     # one day = left+down, one week = right+down
-HMAX3, PAD3 = 56.0, 2.6   # tallest tower (in cell units) / flat empty lot
-CITY_SCALE, TX3, TY3 = 0.93, 252, 16
-CITY_COLORS = (           # level -> (top, left, right) shaded faces
-    ("#1e4a6d", "#17395a", "#122c46"),
-    ("#2f6f9e", "#265c85", "#1d4768"),
-    ("#4a95cc", "#3d7cad", "#2f5f86"),
-    ("#6fb6e6", "#5a96bf", "#467594"),
-    ("#9dd2f5", "#7fb0cf", "#648ba1"),
-)
-
-
-def build_city(weeks, st):
-    uid, H = "city", 420
-    cells = [c for w in weeks for c in w if c]
-    maxc = max([c["c"] for c in cells] + [1])
-
-    city = []
-    for w, col in enumerate(weeks):
-        for d, c in enumerate(col):
-            if not c:
-                continue
-            city.append((w + d, w, d, c))
-
-    parts = []
-    for _, w, d, c in sorted(city):        # painter's order: back rows first
-        x = (6 + w - d) * DX3
-        y = (HMAX3 + 2) + (w + d) * DY3
-        hb = PAD3 if not c["c"] else PAD3 + c["c"] / maxc * (HMAX3 - PAD3)
-        up = hb - PAD3
-        lvl = min(c["l"], 4)
-        anim = (f'<g class="bld" style="animation-delay:{w * 0.018:.2f}s">'
-                if c["c"] else "<g>")
-        parts.append(
-            f'<g transform="translate({x:.1f} {y:.1f})">{anim}'
-            f'<rect width="{C3}" height="{C3}" class="t{lvl}" '
-            f'transform="translate(0 {-up:.2f}) skewY(-30) skewX(40.89) scale(1 1.15)"/>'
-            f'<rect width="{C3}" height="{hb:.2f}" class="l{lvl}" '
-            f'transform="translate(0 {-up:.2f}) skewY(30) scale(1 1.15)"/>'
-            f'<rect width="{C3}" height="{hb:.2f}" class="r{lvl}" '
-            f'transform="translate({C3} {5.03 - up:.2f}) skewY(-30) scale(1 1.15)"/>'
-            f"</g></g>"
-        )
-
-    faces = "".join(f".t{i}{{fill:{t}}}.l{i}{{fill:{l}}}.r{i}{{fill:{r}}}"
-                    for i, (t, l, r) in enumerate(CITY_COLORS))
-    defs = ("<style>" + faces +
-            ".bld{animation:grow .9s cubic-bezier(.2,.75,.3,1) both}"
-            "@keyframes grow{from{transform:translateY(64px);opacity:0}"
-            "to{transform:translateY(0);opacity:1}}</style>")
-
-    body = card(28, 26, 804, 368)
-    body += (f'<text x="{GX}" y="66" font-family="{SANS}" font-size="11" font-weight="850" '
-             f'letter-spacing="3.4" fill="{ACC}">CONTRIBUTION CITY</text>'
-             f'<text x="{GX}" y="122" font-family="{SANS}" font-size="44" font-weight="900" '
-             f'letter-spacing="-1.5" fill="{TEXT}">{st["total"]}</text>'
-             f'<text x="{GX}" y="144" font-family="{SANS}" font-size="12.5" '
-             f'fill="{MUTED}">contributions in the last year</text>')
-    stats = (("active days", st["active"]), ("busiest day", st["bestdayn"]),
-             ("best run", f'{st["best"]}d'), ("streak", f'{st["streak"]}d'))
-    for i, (label, val) in enumerate(stats):
-        y = 186 + i * 26
-        body += (f'<text x="{GX}" y="{y}" font-family="{MONO}" font-size="10" '
-                 f'letter-spacing="2.2" fill="{MUTED}">{label.upper()}</text>'
-                 f'<text x="{GX + 120}" y="{y}" font-family="{MONO}" font-size="12" '
-                 f'font-weight="700" fill="{ACC}">{val}</text>')
-    body += (f'<text x="{GX}" y="372" font-family="{MONO}" font-size="11" '
-             f'fill="{MUTED}">@{LOGIN.lower()}</text>'
-             f'<g transform="translate({TX3} {TY3}) scale({CITY_SCALE})">'
-             f'{"".join(parts)}</g>')
-
-    return shell(uid, H, f'Contribution city — {st["total"]} contributions, '
-                         f'{st["active"]} active days', "Contribution city", body, defs)
-
-
-# --------------------------------------------------------------- resume
-
-RESUME = {
-    "title": "Software Engineer · Full-Stack & AI",
-    "place": "VISAKHAPATNAM, INDIA",
-    "email": "rajshalem72@gmail.com",
-    # (label, number of tools listed in that resume category) — no invented ratings
-    "loadout": (("PROGRAMMING", 6), ("FRONTEND", 2), ("BACKEND", 4), ("DATA / SQL", 7),
-                ("AI / GENAI", 9), ("CLOUD / DEVOPS", 8), ("DELIVERY", 6)),
-    "education": ("B.Tech, Information Technology",
-                  "Anil Neerukonda Institute of Technology & Sciences",
-                  "2022 – 2026 · CGPA 8.69 / 10"),
-    "badges": (("PRESIDENT · ENTREPRENEURSHIP CLUB", "5+ workshops · teams of 5–10"),
-               ("SMART INDIA HACKATHON 2025", "AI & Product Innovation")),
-}
-
-
-def build_resume(profile, st):
-    uid, H = "resume", 430
-    r = RESUME
-    mx = max(n for _, n in r["loadout"])
-    bx, bw = 452, 302
-
-    body = card(28, 26, 804, 378)
-
-    # identity
-    body += (f'<text x="{GX}" y="66" font-family="{SANS}" font-size="11" font-weight="850" '
-             f'letter-spacing="3.4" fill="{ACC}">PLAYER PROFILE</text>'
-             f'<text x="{GX}" y="106" font-family="{SANS}" font-size="30" font-weight="850" '
-             f'letter-spacing="-0.8" fill="{TEXT}">{esc(profile["name"] or LOGIN)}'
-             f'<tspan class="cursor" fill="{ACC}">_</tspan></text>'
-             f'<text x="{GX}" y="130" font-family="{SANS}" font-size="13" '
-             f'fill="{MUTED}">{esc(r["title"])}</text>'
-             f'<text x="{GX}" y="152" font-family="{MONO}" font-size="10" letter-spacing="2" '
-             f'fill="{MUTED}">{r["place"]}</text>'
-             f'<text x="{GX}" y="180" font-family="{MONO}" font-size="11" '
-             f'fill="{ACC}">{r["email"]}</text>'
-             f'<text x="{GX}" y="198" font-family="{MONO}" font-size="11" '
-             f'fill="{ACC}">github.com/{LOGIN}</text>'
-             f'<line x1="{GX}" y1="218" x2="{GX + 330}" y2="218" stroke="{TEXT}" '
-             f'stroke-opacity=".12"/>'
-             f'<text x="{GX}" y="244" font-family="{SANS}" font-size="10" font-weight="700" '
-             f'letter-spacing="2.2" fill="{MUTED}">EDUCATION</text>'
-             f'<text x="{GX}" y="268" font-family="{SANS}" font-size="13" font-weight="700" '
-             f'fill="{TEXT}">{esc(r["education"][0])}</text>'
-             f'<text x="{GX}" y="286" font-family="{SANS}" font-size="11" '
-             f'fill="{MUTED}">{esc(fit(r["education"][1], 52))}</text>'
-             f'<text x="{GX}" y="306" font-family="{MONO}" font-size="10.5" '
-             f'fill="{ACC}">{r["education"][2]}</text>')
-
-    # loadout bars
-    body += (f'<text x="{bx}" y="66" font-family="{SANS}" font-size="10" font-weight="700" '
-             f'letter-spacing="2.2" fill="{MUTED}">LOADOUT · TOOLS PER STACK</text>')
-    for i, (label, n) in enumerate(r["loadout"]):
-        y = 96 + i * 30
-        w = bw * n / mx
-        body += (f'<text x="{bx}" y="{y}" font-family="{MONO}" font-size="10.5" '
-                 f'letter-spacing="1.6" fill="{TEXT}">{label}</text>'
-                 f'<text x="{bx + bw + 42}" y="{y}" text-anchor="end" font-family="{MONO}" '
-                 f'font-size="11" fill="{ACC}">{n:02d}</text>'
-                 f'<rect x="{bx}" y="{y + 7}" width="{bw}" height="6" rx="3" fill="#ffffff" '
-                 f'fill-opacity=".06"/>'
-                 f'<rect class="bar" x="{bx}" y="{y + 7}" width="{w:.0f}" height="6" rx="3" '
-                 f'fill="{ACC}" fill-opacity="{0.55 + 0.05 * n:.2f}" '
-                 f'style="animation-delay:{0.15 + i * 0.08:.2f}s"/>')
-
-    # badges
-    for i, (head, sub) in enumerate(r["badges"]):
-        x = GX + i * 396
-        body += (f'<g class="badge" style="animation-delay:{0.9 + i * 0.12:.2f}s">'
-                 f'<rect x="{x}" y="330" width="380" height="46" rx="12" fill="{ACC}" '
-                 f'fill-opacity=".07" stroke="{ACC}" stroke-opacity=".35"/>'
-                 f'<text x="{x + 16}" y="350" font-family="{MONO}" font-size="10" '
-                 f'letter-spacing="1.4" fill="{TEXT}">{esc(head)}</text>'
-                 f'<text x="{x + 16}" y="366" font-family="{MONO}" font-size="10" '
-                 f'fill="{MUTED}">{esc(sub)}</text></g>')
-
-    return shell(uid, H, f'{profile["name"] or LOGIN} — player profile',
-                 "Player profile", body)
+            f'<animate attributeName="opacity" from="0" to="1" dur="0.45s" '
+            f'begin="{0.15 + i * 0.1:.2f}s" fill="freeze"/>'
+            f'<rect width="{CARD_W}" height="{CARD_H}" rx="14" fill="{PANEL}" stroke="{RULE}"/>'
+            f'<path d="M0 13a13 13 0 0 1 13-13h368a13 13 0 0 1 13 13v17H0z" fill="#ffffff" '
+            f'fill-opacity=".03"/>'
+            f'<line x1="0" y1="30" x2="{CARD_W}" y2="30" stroke="{RULE}"/>'
+            f'{label(16, 19.5, fit(r["name"], 32), INK2, 10.5, "1.2")}'
+            f'<circle cx="378" cy="15" r="3.5" fill="{GREEN if age.endswith(("d ago", "w ago", "today")) else INK2}" '
+            f'fill-opacity=".9"/>'
+            f'<text x="18" y="60" font-family="{MONO}" font-size="{T_LEAD}" font-weight="700" '
+            f'fill="{INK}">{esc(name)}</text>'
+            + (f'<text x="18" y="82" font-family="{SANS}" font-size="{T_BODY}" '
+               f'fill="{INK2}">{esc(line1)}</text>' if line1 else "")
+            + (f'<text x="18" y="98" font-family="{SANS}" font-size="{T_BODY}" '
+               f'fill="{INK2}">{esc(line2)}</text>' if line2 else "")
+            + f'<rect x="18" y="116" width="{chip_w:.0f}" height="18" rx="9" fill="#ffffff" '
+            f'fill-opacity=".06"/><text x="{18 + chip_w / 2:.0f}" y="128.5" text-anchor="middle" '
+            f'font-family="{MONO}" font-size="{T_DATA}" fill="{INK2}">{esc(lang)}</text>'
+            f'{label(18, 152, f"pushed {age}", INK2, 11)}'
+            f"</g></a>")
+    return shell(uid, H, f'Projects — {", ".join(r["name"] for r in repos[:4])}', "Projects", body)
 
 
 # --------------------------------------------------------------- galaxy
 
-GAL_CX, GAL_CY = 566, 198
-GAL_VIOLET, GAL_PALE, GAL_LILAC = "#818cf8", "#e0e7ff", "#a5b4fc"
+GAL_CX, GAL_CY = 572, 234
 
 
 def _lcg(n):
-    """Stable pseudo-random in [0,1) so the sky looks the same on every run."""
     return ((n * 1103515245 + 12345) % 2147483648) / 2147483648
 
 
 def build_galaxy(repos, langs, profile):
     uid, H = "galaxy", 380
     n = max(1, len(repos))
-    # five labels, spread along the spiral; owned-star repos get first pick
+    max_stars = max([r["stargazerCount"] for r in repos] + [1])
     leaders = sorted(({i for i in (9, 17, 25) if i < n}
                       | {i for i in range(n) if repos[i]["stargazerCount"]}))[:5]
     color_of = {l["name"]: l["color"] for l in langs}
 
     sky, stars = [], []
-
-    # background dust
-    for i in range(300):
+    for i in range(90):                       # 90 dust points, not 300
         a = _lcg(i * 3 + 1) * 6.28318
-        r = 20 + _lcg(i * 3 + 2) ** 0.62 * 175
-        x, y = GAL_CX + r * 0.96 * math.cos(a), GAL_CY + r * 0.74 * math.sin(a)
-        if x < 250 or x > 828 or y < 34 or y > 386:
+        r = 30 + _lcg(i * 3 + 2) ** 0.62 * 150
+        x, y = GAL_CX + r * 0.98 * math.cos(a), GAL_CY + r * 0.66 * math.sin(a)
+        if x < 250 or x > 828 or y < 100 or y > 348:
             continue
         sky.append(f'<circle class="star" cx="{x:.1f}" cy="{y:.1f}" '
-                   f'r="{0.6 + _lcg(i * 3 + 3) * 1.3:.2f}" fill="{GAL_PALE}" fill-opacity=".7" '
-                   f'style="animation-delay:{_lcg(i * 7 + 5) * 5:.2f}s"/>')
+                   f'r="{0.6 + _lcg(i * 3 + 3) * 1.1:.2f}" fill="{VIOLET_PALE}" fill-opacity=".6" '
+                   f'style="animation-delay:{_lcg(i * 7 + 5) * 6:.2f}s"/>')
 
-    # orbits
-    for r in (72, 118, 164):
-        stars.append(f'<circle cx="{GAL_CX}" cy="{GAL_CY}" r="{r}" fill="none" stroke="{GAL_LILAC}" '
-                     f'stroke-opacity=".07" stroke-dasharray="2 7"/>')
+    for r in (62, 104, 146):
+        stars.append(f'<circle cx="{GAL_CX}" cy="{GAL_CY}" r="{r}" fill="none" '
+                     f'stroke="{VIOLET_LILAC}" stroke-opacity=".08" stroke-dasharray="2 8"/>')
 
-    # one star per repository, sunflower spiral so nothing overlaps
     pts = []
     for i in range(n):
-        ang = i * 2.399963
-        rad = 46 + 3.9 * i
-        pts.append((GAL_CX + rad * math.cos(ang),
-                    GAL_CY + rad * 0.78 * math.sin(ang),
-                    rad))
+        ang, rad = i * 2.399963, 42 + 3.7 * i
+        pts.append((GAL_CX + rad * math.cos(ang), GAL_CY + rad * 0.72 * math.sin(ang)))
 
     for i, r in enumerate(repos):
-        x, y, rad = pts[i]
-        col = color_of.get((r["primaryLanguage"] or {}).get("name"), GAL_VIOLET)
-        core = 8.2 if r["stargazerCount"] else 6.2
-        halo = ""
-        if r["stargazerCount"]:
-            halo = (f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{core * 2.6:.1f}" fill="{col}" '
-                    f'fill-opacity=".18"/>')
+        x, y = pts[i]
+        col = color_of.get((r["primaryLanguage"] or {}).get("name"), VIOLET)
+        core = 4.6 + 4.4 * (r["stargazerCount"] / max_stars)   # continuous, matches the promise
+        halo = (f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{core * 2.6:.1f}" fill="{col}" '
+                f'fill-opacity=".16"/>') if r["stargazerCount"] else ""
         stars.append(f'{halo}<circle cx="{x:.1f}" cy="{y:.1f}" r="{core:.1f}" fill="{col}"/>'
                      f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{core * 2.6:.1f}" fill="none" '
-                     f'stroke="{col}" stroke-opacity=".28"/>')
+                     f'stroke="{col}" stroke-opacity=".26"/>')
 
-    # labels for the five biggest, nudged apart
     used = []
     for i in leaders:
-        x, y, rad = pts[i]
+        x, y = pts[i]
         right = x < GAL_CX + 30
-        while any(abs(y - u) < 14 for u in used):
-            y += 14
+        while any(abs(y - u) < 28 for u in used):
+            y += 28
         used.append(y)
-        name = fit(repos[i]["name"], 16)
-        tx = x + 16 if right else x - 16
-        anchor = "start" if right else "end"
+        tx, anchor = (x + 15, "start") if right else (x - 15, "end")
+        star_txt = "★ " + str(repos[i]["stargazerCount"])
         stars.append(
-            f'<line x1="{x + 9:.1f}" y1="{y:.1f}" x2="{tx - (4 if right else -4):.1f}" y2="{y:.1f}" '
-            f'stroke="{GAL_LILAC}" stroke-opacity=".35"/>'
-            f'<text x="{tx:.1f}" y="{y - 1:.1f}" text-anchor="{anchor}" font-family="{MONO}" '
-            f'font-size="10" fill="{GAL_PALE}">{esc(name)}</text>'
-            f'<text x="{tx:.1f}" y="{y + 10:.1f}" text-anchor="{anchor}" font-family="{MONO}" '
-            f'font-size="9" fill="{GAL_LILAC}">&#9733; {repos[i]["stargazerCount"]}</text>')
+            f'<line x1="{x + 8:.1f}" y1="{y:.1f}" x2="{tx - (3 if right else -3):.1f}" y2="{y:.1f}" '
+            f'stroke="{VIOLET_LILAC}" stroke-opacity=".3"/>'
+            f'{label(tx, y - 2, fit(repos[i]["name"], 16), VIOLET_PALE, 10.5, "0")}'
+            f'{label(tx, y + 13, star_txt, VIOLET_LILAC, 10, "0")}')
 
-    body = card(28, 26, 804, 328, rx=20, stroke_op=".5")
-    body += (f'<text x="{GX}" y="52" font-family="{SANS}" font-size="11" font-weight="700" '
-             f'letter-spacing="2.2" fill="#7884f7">REPO GALAXY</text>'
-             f'<text x="{GX}" y="86" font-family="{SANS}" font-size="26" font-weight="800" '
-             f'fill="{GAL_PALE}">@{LOGIN}</text>'
-             f'<text x="{GX}" y="112" font-family="{SANS}" font-size="13" font-weight="600" '
-             f'fill="{GAL_LILAC}">{profile["totalStars"]} stars · {n} repositories</text>'
-             f'<text x="{GX}" y="134" font-family="{SANS}" font-size="11.5" '
-             f'fill="{GAL_LILAC}" fill-opacity=".85">Each star is a repository, sized by its '
-             f'stars.</text>'
-             f'<text x="{GX}" y="196" font-family="{SANS}" font-size="10" font-weight="700" '
-             f'letter-spacing="2" fill="{GAL_LILAC}">LANGUAGES</text>')
+    body = card(CARD_X, CARD_Y, W - 2 * CARD_X, 328)
+    body += head("Repo galaxy", f"{profile['totalStars']} stars")
+    body += (f'<text x="{GUTTER}" y="114" font-family="{SANS}" font-size="{T_BODY}" '
+             f'fill="{INK2}">{n} public repositories, one star each — radius is its star '
+             f'count.</text>')
+    body += label(GUTTER, 156, "LANGUAGES", VIOLET_LILAC, 10.5, "2")
     for i, lang in enumerate(langs[:4]):
-        y = 220 + i * 22
-        body += (f'<circle cx="{GX + 5}" cy="{y - 4}" r="3.4" fill="{lang["color"]}"/>'
-                 f'<text x="{GX + 18}" y="{y}" font-family="{SANS}" font-size="12" '
-                 f'font-weight="700" fill="{GAL_PALE}">{esc(lang["name"])}</text>'
-                 f'<text x="{GX + 168}" y="{y}" text-anchor="end" font-family="{MONO}" '
-                 f'font-size="11" fill="{GAL_LILAC}">{lang["percentage"]}%</text>')
+        y = 182 + i * 22
+        pct = str(lang["percentage"]) + "%"
+        body += (f'<circle cx="{GUTTER + 5}" cy="{y - 4}" r="3.2" fill="{lang["color"]}"/>'
+                 f'<text x="{GUTTER + 18}" y="{y}" font-family="{SANS}" font-size="{T_BODY}" '
+                 f'font-weight="700" fill="{VIOLET_PALE}">{esc(lang["name"])}</text>'
+                 f'{label(GUTTER + 158, y, pct, VIOLET_LILAC, 11, "0")}')
     body += "".join(sky) + "".join(stars)
+    return shell(uid, H, f'Repo galaxy — {n} repositories, {profile["totalStars"]} stars in total',
+                 "Repositories as a galaxy", body)
 
-    return shell(uid, H, f'Repo galaxy — {n} repositories, {profile["totalStars"]} stars',
-                 "Repo galaxy", body)
 
-
-# ------------------------------------------------------------- heatmaps
+# ----------------------------------------------------------- heatmaps
 
 def grid(weeks, gy=GY):
     out = []
@@ -583,32 +517,18 @@ def grid(weeks, gy=GY):
             if not c:
                 continue
             x, y = GX + w * PITCH, gy + d * PITCH
-            if c["l"]:
-                fill, op = LEVEL[c["l"]]
-                out.append(f'<rect x="{x}" y="{y}" width="{CELL}" height="{CELL}" rx="2.5" '
-                           f'fill="{fill}" fill-opacity="{op}"/>')
-            else:
-                out.append(f'<rect x="{x}" y="{y}" width="{CELL}" height="{CELL}" rx="2.5" '
-                           f'fill="{TEXT}" fill-opacity=".05"/>')
+            op = (0, .07, .34, .55, 1)[c["l"]]
+            fill, o = (INK, .07) if c["l"] == 0 else (ACCENT, op)
+            out.append(f'<rect x="{x}" y="{y}" width="{CELL}" height="{CELL}" rx="2.5" '
+                       f'fill="{fill}" fill-opacity="{o}"/>')
     return "".join(out)
-
-
-def heatmap_head(body, title, subtitle, live="LIVE"):
-    return (body + f'<text x="{GX}" y="60" font-family="{SANS}" font-size="11" font-weight="850" '
-                   f'letter-spacing="3.4" fill="{ACC}">{title}</text>'
-                   f'<text x="{GX}" y="84" font-family="{SANS}" font-size="20" font-weight="800" '
-                   f'fill="{TEXT}">{subtitle}</text>'
-                   f'<circle class="pulse" cx="798" cy="68" r="3" fill="{GREEN}"/>'
-                   f'<text x="814" y="72" text-anchor="end" font-family="{SANS}" font-size="10" '
-                   f'font-weight="850" letter-spacing="1.8" fill="{DIM}">{live}</text>')
 
 
 def build_snake(weeks, st, start, last):
     uid, H = "snake", 264
     seq = []
     for w, col in enumerate(weeks):
-        order = range(ROWS) if w % 2 == 0 else range(ROWS - 1, -1, -1)
-        for d in order:
+        for d in (range(ROWS) if w % 2 == 0 else range(ROWS - 1, -1, -1)):
             if col[d] and col[d]["c"] > 0:
                 seq.append((w, d))
     pts = [(GX + w * PITCH + CELL / 2, GY + d * PITCH + CELL / 2) for w, d in seq]
@@ -623,71 +543,127 @@ def build_snake(weeks, st, start, last):
                 continue
             x, y = GX + w * PITCH, GY + d * PITCH
             if c["c"] > 0:
-                fill, op = LEVEL[c["l"]]
-                delay = step[(w, d)] / total * 7.4
                 cells.append(f'<rect class="cell" x="{x}" y="{y}" width="{CELL}" height="{CELL}" '
-                             f'rx="2.5" fill="{fill}" fill-opacity="{op}" '
-                             f'style="animation-delay:{delay:.2f}s"/>')
+                             f'rx="2.5" fill="{ACCENT}" fill-opacity="{(.34, .55, 1)[min(c["l"], 3) - 1]}" '
+                             f'style="animation-delay:{step[(w, d)] / total * 7.4:.2f}s"/>')
             else:
                 cells.append(f'<rect x="{x}" y="{y}" width="{CELL}" height="{CELL}" rx="2.5" '
-                             f'fill="{TEXT}" fill-opacity=".05"/>')
+                             f'fill="{INK}" fill-opacity=".05"/>')
 
     defs = (f'<linearGradient id="{uid}-trail" x1="0" y1="0" x2="1" y2="0">'
-            f'<stop offset="0%" stop-color="{GREEN}"/><stop offset="55%" stop-color="{DIM}"/>'
-            f'<stop offset="100%" stop-color="{ACC}"/></linearGradient>'
+            f'<stop offset="0%" stop-color="{GREEN}"/><stop offset="100%" stop-color="{ACCENT}"/>'
+            f'</linearGradient>'
             f'<filter id="{uid}-glow" x="-60%" y="-60%" width="220%" height="220%">'
             f'<feGaussianBlur stdDeviation="4" result="b"/>'
             f'<feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>')
 
-    body = heatmap_head(card(28, 26, 804, 212), "SNAKE TRAIL",
-                        f'{st["total"]} contributions, one continuous run')
+    body = card(CARD_X, CARD_Y, W - 2 * CARD_X, 212)
+    body += head("Snake trail", f"{st['active']} active days")
     body += "".join(cells)
     body += (f'<path class="trail" d="{path}" fill="none" stroke="url(#{uid}-trail)" '
-             f'stroke-width="4.4" stroke-linecap="round" stroke-linejoin="round" pathLength="1" '
+             f'stroke-width="4" stroke-linecap="round" stroke-linejoin="round" pathLength="1" '
              f'filter="url(#{uid}-glow)"/>'
-             f'<circle r="6" fill="#ffffff" filter="url(#{uid}-glow)">'
+             f'<circle r="5" fill="#ffffff" filter="url(#{uid}-glow)">'
              f'<animateMotion dur="9s" repeatCount="indefinite" path="{path}" '
              f'keyPoints="0;1;1" keyTimes="0;0.82;1" calcMode="linear"/></circle>')
-    return shell(uid, H, f'Snake trail — {st["total"]} contributions, best run {st["best"]} days',
+    return shell(uid, H, f'Snake trail through {st["total"]} contributions over {st["active"]} '
+                         f'active days, longest run {st["best"]} days',
                  "Contribution snake trail", body, defs)
 
 
-def build_shooter(weeks, st, start, last):
+def build_shooter(weeks, st):
     uid, H = "shooter", 264
     lit = [(w, d, c) for w, col in enumerate(weeks) for d, c in enumerate(col)
            if c and c["l"] > 0]
     booms = "".join(
         f'<rect class="boom" x="{GX + w * PITCH - 3}" y="{GY + d * PITCH - 3}" '
-        f'width="{CELL + 6}" height="{CELL + 6}" rx="4" fill="{DIM}" '
-        f'style="animation-delay:{(i * 1.7) % 5.5:.2f}s"/>'
-        for i, (w, d, c) in enumerate(lit[:: max(1, len(lit) // 6)][:6])
-    )
+        f'width="{CELL + 6}" height="{CELL + 6}" rx="4" fill="{ACCENT}" '
+        f'style="animation-delay:{(i * 1.9) % 5.5:.2f}s"/>'
+        for i, (w, d, _) in enumerate(lit[:: max(1, len(lit) // 4)][:4]))
     stars = "".join(
         f'<circle class="star" cx="{GX + (i * 97) % 730 + 4}" cy="{94 + (i * 53) % 116}" '
-        f'r="{1 + (i % 3) * 0.6:.1f}" fill="{TEXT}" style="animation-delay:{i * 0.4:.1f}s"/>'
-        for i in range(18)
-    )
+        f'r="{1 + (i % 3) * 0.5:.1f}" fill="{INK}" style="animation-delay:{i * 0.7:.1f}s"/>'
+        for i in range(12))
     lasers = "".join(
-        f'<rect class="laser" x="{6 + i * 5}" y="196" width="2" height="16" rx="1" fill="{CYAN}" '
-        f'style="animation-delay:{i * 0.33:.2f}s"/>' for i in range(3)
-    )
+        f'<rect class="laser" x="{6 + i * 5}" y="196" width="2" height="16" rx="1" fill="{ACCENT}" '
+        f'style="animation-delay:{i * 0.33:.2f}s"/>' for i in range(3))
     defs = (f'<filter id="{uid}-glow" x="-80%" y="-80%" width="260%" height="260%">'
             f'<feGaussianBlur stdDeviation="3" result="b"/>'
             f'<feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>')
 
-    body = heatmap_head(card(28, 26, 804, 212), "SPACE SHOOTER",
-                        f'{st["total"]} contributions · score {st["total"]:04d}')
-    body += stars + grid(weeks, GY) + booms
+    body = card(CARD_X, CARD_Y, W - 2 * CARD_X, 212)
+    body += head("Space shooter", f"score {st['total']:04d}")
+    body += stars + grid(weeks) + booms
     body += (f'<g transform="translate({GX},0)"><g class="ship"><g transform="translate(0,206)">'
-             f'<rect x="-16" y="-22" width="32" height="60" fill="{CYAN}" fill-opacity=".05"/>'
-             f"{lasers}"
-             f'<path d="M0 -12 L12 12 L0 6 L-12 12 Z" fill="{ACC}" filter="url(#{uid}-glow)"/>'
+             f'<rect x="-16" y="-22" width="32" height="60" fill="{ACCENT}" fill-opacity=".05"/>'
+             f'{lasers}'
+             f'<path d="M0 -12 L12 12 L0 6 L-12 12 Z" fill="{ACCENT}" filter="url(#{uid}-glow)"/>'
              f'<path d="M0 -6 L6 9 L-6 9 Z" fill="#e6fbff"/>'
-             f'<circle class="pulse" cx="0" cy="7" r="2.6" fill="#e6fbff"/>'
-             f"</g></g></g>")
-    return shell(uid, H, f'Contribution space shooter — {st["total"]} contributions',
-                 "Contribution space shooter", body, defs)
+             f'<circle class="pulse" cx="0" cy="7" r="2.6" fill="#e6fbff"/></g></g></g>')
+    return shell(uid, H, f'Contribution space shooter — {st["total"]} contributions, score '
+                         f'{st["total"]:04d}', "Contribution space shooter", body, defs)
 
+
+# --------------------------------------------------------------- resume
+
+RESUME = {
+    "place": "VISAKHAPATNAM, INDIA",
+    "email": "rajshalem72@gmail.com",
+    "loadout": (("PROGRAMMING", 6), ("FRONTEND", 2), ("BACKEND", 4), ("DATA / SQL", 7),
+                ("AI / GENAI", 9), ("CLOUD / DEVOPS", 8), ("DELIVERY", 6)),
+    "education": ("B.Tech, Information Technology",
+                  "Anil Neerukonda Institute of Technology & Sciences",
+                  "2022 – 2026 · CGPA 8.69 / 10"),
+    "badges": (("PRESIDENT · ENTREPRENEURSHIP CLUB", "5+ workshops · teams of 5–10"),
+               ("SMART INDIA HACKATHON 2025", "AI & Product Innovation")),
+}
+
+
+def build_resume(profile, st):
+    uid, H = "resume", 430
+    r = RESUME
+    mx = max(n for _, n in r["loadout"])
+    bx, bw = 452, 292
+
+    body = card(CARD_X, CARD_Y, W - 2 * CARD_X, 378)
+    body += head("Profile", "full-stack & AI")
+    body += (f'<text x="{GUTTER}" y="112" font-family="{MONO}" font-size="{T_DATA}" '
+             f'letter-spacing="2.2" fill="{INK2}">{r["place"]}</text>'
+             f'{label(GUTTER, 138, r["email"], ACCENT, T_BODY, "0")}'
+             f'{label(GUTTER, 158, f"github.com/{LOGIN}", ACCENT, T_BODY, "0")}'
+             f'<line x1="{GUTTER}" y1="180" x2="{GUTTER + 330}" y2="180" stroke="{RULE}"/>'
+             f'{label(GUTTER, 204, "EDUCATION", INK2, 10.5, "2")}'
+             f'<text x="{GUTTER}" y="230" font-family="{SANS}" font-size="{T_BODY}" '
+             f'font-weight="700" fill="{INK}">{esc(r["education"][0])}</text>'
+             f'<text x="{GUTTER}" y="250" font-family="{SANS}" font-size="{T_DATA}" '
+             f'fill="{INK2}">{esc(fit(r["education"][1], 52))}</text>'
+             f'{label(GUTTER, 272, r["education"][2], INK, 11)}')
+
+    body += label(bx, 112, "TOOLS LISTED PER STACK", INK2, 10.5, "2")
+    for i, (name, n) in enumerate(r["loadout"]):
+        y = 140 + i * 28
+        body += (label(bx, y, name, INK, 10.5)
+                 + label(bx + bw + 40, y, f"{n:02d}", ACCENT, 11, "0")
+                 + f'<rect x="{bx}" y="{y + 6}" width="{bw}" height="6" rx="3" fill="#ffffff" '
+                   f'fill-opacity=".06"/>'
+                   f'<rect class="bar" x="{bx}" y="{y + 6}" width="{bw * n / mx:.0f}" height="6" '
+                   f'rx="3" fill="{ACCENT}" style="animation-delay:{0.1 + i * 0.07:.2f}s"/>')
+    body += label(bx, 348, "COUNTS, NOT A RATING", INK2, 10, "1.4")
+
+    for i, (name, sub) in enumerate(r["badges"]):
+            x = GUTTER + i * 396
+            body += (f'<g class="badge" style="animation-delay:{0.2 + i * 0.1:.2f}s">'
+                     f'<rect x="{x}" y="300" width="380" height="46" rx="12" fill="#ffffff" '
+                     f'fill-opacity=".04" stroke="{RULE}"/>'
+                     f'{label(x + 16, 320, name, INK, 10, "1.4")}'
+                     f'{label(x + 16, 336, sub, INK2, 10, "0.6")}</g>')
+    return shell(uid, H, f'{profile["name"] or LOGIN} — B.Tech IT, Anil Neerukonda Institute of '
+                         f'Technology & Sciences, CGPA 8.69/10, {r["email"]}, president of the '
+                         f'entrepreneurship club, Smart India Hackathon 2025',
+                 "Profile: skills, education, leadership", body)
+
+
+# --------------------------------------------------------------- social
 
 def build_social():
     uid, H = "social", 126
@@ -699,44 +675,18 @@ def build_social():
             "c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 "
             "0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 "
             "0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z")
-    body = card(26, 22, 808, 82, rx=22, stroke_op=".48")
+    body = card(CARD_X, 22, W - 2 * CARD_X, 82, rx=22)
     body += (f'<a href="https://github.com/{LOGIN}" target="_blank">'
-             f'<rect x="341" y="40" width="178" height="46" rx="23" fill="#ffffff" '
-             f'fill-opacity=".05"/>'
-             f'<rect x="342" y="41" width="176" height="44" rx="22" fill="none" stroke="{ACC}" '
-             f'stroke-opacity=".55"><animate attributeName="stroke-opacity" values=".3;.8;.3" '
-             f'dur="4s" repeatCount="indefinite"/></rect>'
-             f'<g transform="translate(366,57) scale(1.35)" fill="{TEXT}"><path d="{mark}"/></g>'
-             f'<text x="396" y="59" font-family="{SANS}" font-size="10" font-weight="850" '
-             f'letter-spacing="1.2" fill="{MUTED}">GitHub</text>'
-             f'<text x="396" y="76" font-family="{SANS}" font-size="13.5" font-weight="800" '
-             f'fill="{TEXT}">@{LOGIN}</text></a>')
-    return shell(uid, H, f"GitHub @{LOGIN}", f"GitHub @{LOGIN}", body)
+             f'<rect x="341" y="40" width="178" height="46" rx="23" fill="#ffffff" fill-opacity=".05" '
+             f'stroke="{RULE}"/>'
+             f'<g transform="translate(366,56) scale(1.35)" fill="{INK}"><path d="{mark}"/></g>'
+             f'{label(396, 59, "GITHUB", INK2, 10, "1.2")}'
+             f'<text x="396" y="77" font-family="{SANS}" font-size="{T_BODY}" font-weight="700" '
+             f'fill="{INK}">@{LOGIN}</text></a>')
+    return shell(uid, H, f'GitHub @{LOGIN}', f'GitHub @{LOGIN}', body)
 
 
 # --------------------------------------------------------------- write
-
-def build_readme(repos, st):
-    links = " · ".join(f'[{esc(r["name"])}]({r["url"]})' for r in repos[:4])
-    return (
-        '<div align="center">\n\n'
-        f'<img src="assets/hero.svg" width="860" alt="Shalem Raj (@{LOGIN}) profile card">\n\n'
-        f'<img src="assets/city.svg" width="860" alt="Contribution city — {st["total"]} '
-        f'contributions, {st["active"]} active days">\n\n'
-        f'<img src="assets/space-shooter.svg" width="860" alt="Contribution space shooter — '
-        f'{st["total"]} contributions, {st["active"]} active days">\n\n'
-        f'<img src="assets/galaxy.svg" width="860" alt="Repo galaxy — every repository as a star, '
-        f'sized by its stars">\n\n'
-        f'<img src="assets/projects.svg" width="860" alt="Projects">\n\n'
-        f"<sub>{links}</sub>\n\n"
-        f'<img src="assets/snake.svg" width="860" alt="Snake trail — {st["total"]} contributions, '
-        f'best run {st["best"]} days">\n\n'
-        f'<img src="assets/resume.svg" width="860" alt="Player profile — skills, education, '
-        f'leadership">\n\n'
-        f'<img src="assets/social.svg" width="860" alt="GitHub @{LOGIN}">\n\n'
-        "</div>\n" + DETAILS
-    )
-
 
 DETAILS = """
 <details>
@@ -775,6 +725,33 @@ DETAILS = """
 """
 
 
+def build_readme(repos, st):
+    links = " · ".join(f'[{esc(r["name"])}]({r["url"]})' for r in repos[:4])
+    return (
+        '<div align="center">\n\n'
+        f'<img src="assets/hero.svg" width="860" alt="Shalem Raj (@{LOGIN}) — software engineer, '
+        f'full-stack and AI, Visakhapatnam">\n\n'
+        f'<img src="assets/city.svg" width="860" alt="Contributions this year drawn as a city '
+        f'skyline: {st["total"]} contributions over {st["active"]} active days, busiest day '
+        f'{st["bestdayn"]}, best run {st["best"]} days">\n\n'
+        f'<img src="assets/space-shooter.svg" width="860" alt="The same contribution grid as a '
+        f'space shooter, score {st["total"]:04d}">\n\n'
+        f'<img src="assets/galaxy.svg" width="860" alt="Every public repository as a star, '
+        f'sized by its star count">\n\n'
+        f'<img src="assets/projects.svg" width="860" alt="Projects: '
+        f'{", ".join(r["name"] for r in repos[:4])}">\n\n'
+        f"<sub>{links}</sub>\n\n"
+        f'<img src="assets/snake.svg" width="860" alt="A trail through {st["total"]} '
+        f'contributions across {st["active"]} active days">\n\n'
+        f'<img src="assets/resume.svg" width="860" alt="Profile: B.Tech in Information '
+        f'Technology at Anil Neerukonda Institute of Technology and Sciences, Visakhapatnam, '
+        f'CGPA 8.69 of 10, 2022 to 2026; email rajshalem72@gmail.com; president of the '
+        f'Entrepreneurship Club; Smart India Hackathon 2025">\n\n'
+        f'<img src="assets/social.svg" width="860" alt="GitHub @{LOGIN}">\n\n'
+        "</div>\n" + DETAILS
+    )
+
+
 def main():
     user = gh(f"users/{LOGIN}")
     repos = json.loads(subprocess.run(
@@ -792,7 +769,7 @@ def main():
               "HTML": "#e34c26", "CSS": "#663399", "EJS": "#a91e50", "SCSS": "#c6538c",
               "Java": "#b07219", "Shell": "#89e051", "Dockerfile": "#384d54", "C": "#555555",
               "C++": "#f34b7d", "Jupyter Notebook": "#DA5B0B", "Vue": "#41b883"}
-    top_langs = [{"name": k, "color": colors.get(k, ACC), "percentage": round(v / total_lang * 100)}
+    top_langs = [{"name": k, "color": colors.get(k, ACCENT), "percentage": round(v / total_lang * 100)}
                  for k, v in sorted(langs.items(), key=lambda kv: -kv[1])]
 
     weeks, start, last = fetch_contributions(LOGIN)
@@ -801,23 +778,25 @@ def main():
                "followers": user["followers"], "totalRepos": len(live),
                "totalStars": sum(r["stargazerCount"] for r in live)}
 
-    picks = sorted(live, key=lambda r: (r["stargazerCount"], r["pushedAt"]), reverse=True)[:4]
+    # a described, recently-touched repo beats a bare one: no "No description provided." cards
+    picks = sorted(live, key=lambda r: (bool(r["description"]), r["description"] or "",
+                                        r["pushedAt"]), reverse=True)[:4]
 
     (OUT / "hero.svg").write_text(build_hero(profile, top_langs, st), encoding="utf-8")
     (OUT / "city.svg").write_text(build_city(weeks, st), encoding="utf-8")
-    (OUT / "space-shooter.svg").write_text(build_shooter(weeks, st, start, last), encoding="utf-8")
+    (OUT / "space-shooter.svg").write_text(build_shooter(weeks, st), encoding="utf-8")
     (OUT / "galaxy.svg").write_text(build_galaxy(live, top_langs, profile), encoding="utf-8")
-    (OUT / "projects.svg").write_text(build_projects(picks, top_langs), encoding="utf-8")
+    (OUT / "projects.svg").write_text(build_projects(picks), encoding="utf-8")
     (OUT / "snake.svg").write_text(build_snake(weeks, st, start, last), encoding="utf-8")
     (OUT / "resume.svg").write_text(build_resume(profile, st), encoding="utf-8")
     (OUT / "social.svg").write_text(build_social(), encoding="utf-8")
     (ROOT / "README.md").write_text(build_readme(picks, st), encoding="utf-8")
 
-    print(f'wrote 6 cards · {st["total"]} contributions · {st["active"]} active days · '
+    print(f'8 cards · {st["total"]} contributions · {st["active"]} active days · '
           f'{len(live)} repos · {profile["totalStars"]} stars')
     for r in picks:
-        print(f'  {r["name"]:<34}{(r["primaryLanguage"] or {}).get("name", "-"):<12}'
-              f'★{r["stargazerCount"]}  {since(r["pushedAt"])}')
+        print(f'  {fit(r["name"], 32):<34}{(r["primaryLanguage"] or {}).get("name", "-"):<12}'
+              f'★{r["stargazerCount"]}  {(r["description"] or "")[:44]}')
 
 
 if __name__ == "__main__":
