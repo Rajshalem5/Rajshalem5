@@ -774,6 +774,10 @@ def build_readme(repos, st):
         f'Technology at Anil Neerukonda Institute of Technology and Sciences, Visakhapatnam, '
         f'CGPA 8.69 of 10, 2022 to 2026; email rajshalem72@gmail.com; president of the '
         f'Entrepreneurship Club; Smart India Hackathon 2025">\n\n'
+        f'<img src="assets/cockpit-agent.gif" width="640" alt="Agent state \u2014 a '
+        f'cockpit-style status display, idling">\n\n'
+        f'<sub><a href="https://github.com/finktheartist/cockpit-ui"><b>cockpit UI</b></a> '
+        f'\u2014 the status display, mid-idle</sub>\n\n'
         f'<img src="assets/social.svg" width="860" alt="GitHub @{LOGIN}">\n\n'
         "</div>\n" + DETAILS
     )
