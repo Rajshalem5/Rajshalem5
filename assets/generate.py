@@ -9,6 +9,7 @@ Writes: hero.svg, projects.svg, space-shooter.svg, snake.svg, social.svg, README
 import base64
 import html
 import json
+import math
 import re
 import subprocess
 import urllib.request
@@ -309,6 +310,186 @@ def build_projects(repos, langs):
     return shell(uid, H, f"Projects — {len(repos)} public repositories", "Projects", body)
 
 
+# ----------------------------------------------------------------- city
+
+C3 = 8.72                 # isometric cell size
+DX3, DY3 = 9.69, 5.59     # one day = left+down, one week = right+down
+HMAX3, PAD3 = 56.0, 2.6   # tallest tower (in cell units) / flat empty lot
+CITY_SCALE, TX3, TY3 = 0.93, 252, 16
+CITY_COLORS = (           # level -> (top, left, right) shaded faces
+    ("#1e4a6d", "#17395a", "#122c46"),
+    ("#2f6f9e", "#265c85", "#1d4768"),
+    ("#4a95cc", "#3d7cad", "#2f5f86"),
+    ("#6fb6e6", "#5a96bf", "#467594"),
+    ("#9dd2f5", "#7fb0cf", "#648ba1"),
+)
+
+
+def build_city(weeks, st):
+    uid, H = "city", 420
+    cells = [c for w in weeks for c in w if c]
+    maxc = max([c["c"] for c in cells] + [1])
+
+    city = []
+    for w, col in enumerate(weeks):
+        for d, c in enumerate(col):
+            if not c:
+                continue
+            city.append((w + d, w, d, c))
+
+    parts = []
+    for _, w, d, c in sorted(city):        # painter's order: back rows first
+        x = (6 + w - d) * DX3
+        y = (HMAX3 + 2) + (w + d) * DY3
+        hb = PAD3 if not c["c"] else PAD3 + c["c"] / maxc * (HMAX3 - PAD3)
+        up = hb - PAD3
+        lvl = min(c["l"], 4)
+        anim = (f'<g class="bld" style="animation-delay:{w * 0.018:.2f}s">'
+                if c["c"] else "<g>")
+        parts.append(
+            f'<g transform="translate({x:.1f} {y:.1f})">{anim}'
+            f'<rect width="{C3}" height="{C3}" class="t{lvl}" '
+            f'transform="translate(0 {-up:.2f}) skewY(-30) skewX(40.89) scale(1 1.15)"/>'
+            f'<rect width="{C3}" height="{hb:.2f}" class="l{lvl}" '
+            f'transform="translate(0 {-up:.2f}) skewY(30) scale(1 1.15)"/>'
+            f'<rect width="{C3}" height="{hb:.2f}" class="r{lvl}" '
+            f'transform="translate({C3} {5.03 - up:.2f}) skewY(-30) scale(1 1.15)"/>'
+            f"</g></g>"
+        )
+
+    faces = "".join(f".t{i}{{fill:{t}}}.l{i}{{fill:{l}}}.r{i}{{fill:{r}}}"
+                    for i, (t, l, r) in enumerate(CITY_COLORS))
+    defs = ("<style>" + faces +
+            ".bld{animation:grow .9s cubic-bezier(.2,.75,.3,1) both}"
+            "@keyframes grow{from{transform:translateY(64px);opacity:0}"
+            "to{transform:translateY(0);opacity:1}}</style>")
+
+    body = card(28, 26, 804, 368)
+    body += (f'<text x="{GX}" y="66" font-family="{SANS}" font-size="11" font-weight="850" '
+             f'letter-spacing="3.4" fill="{ACC}">CONTRIBUTION CITY</text>'
+             f'<text x="{GX}" y="122" font-family="{SANS}" font-size="44" font-weight="900" '
+             f'letter-spacing="-1.5" fill="{TEXT}">{st["total"]}</text>'
+             f'<text x="{GX}" y="144" font-family="{SANS}" font-size="12.5" '
+             f'fill="{MUTED}">contributions in the last year</text>')
+    stats = (("active days", st["active"]), ("busiest day", st["bestdayn"]),
+             ("best run", f'{st["best"]}d'), ("streak", f'{st["streak"]}d'))
+    for i, (label, val) in enumerate(stats):
+        y = 186 + i * 26
+        body += (f'<text x="{GX}" y="{y}" font-family="{MONO}" font-size="10" '
+                 f'letter-spacing="2.2" fill="{MUTED}">{label.upper()}</text>'
+                 f'<text x="{GX + 120}" y="{y}" font-family="{MONO}" font-size="12" '
+                 f'font-weight="700" fill="{ACC}">{val}</text>')
+    body += (f'<text x="{GX}" y="372" font-family="{MONO}" font-size="11" '
+             f'fill="{MUTED}">@{LOGIN.lower()}</text>'
+             f'<g transform="translate({TX3} {TY3}) scale({CITY_SCALE})">'
+             f'{"".join(parts)}</g>')
+
+    return shell(uid, H, f'Contribution city — {st["total"]} contributions, '
+                         f'{st["active"]} active days', "Contribution city", body, defs)
+
+
+# --------------------------------------------------------------- galaxy
+
+GAL_CX, GAL_CY = 566, 198
+GAL_VIOLET, GAL_PALE, GAL_LILAC = "#818cf8", "#e0e7ff", "#a5b4fc"
+
+
+def _lcg(n):
+    """Stable pseudo-random in [0,1) so the sky looks the same on every run."""
+    return ((n * 1103515245 + 12345) % 2147483648) / 2147483648
+
+
+def build_galaxy(repos, langs, profile):
+    uid, H = "galaxy", 380
+    n = max(1, len(repos))
+    # five labels, spread along the spiral; owned-star repos get first pick
+    leaders = sorted(({i for i in (9, 17, 25) if i < n}
+                      | {i for i in range(n) if repos[i]["stargazerCount"]}))[:5]
+    color_of = {l["name"]: l["color"] for l in langs}
+
+    sky, stars = [], []
+
+    # background dust
+    for i in range(300):
+        a = _lcg(i * 3 + 1) * 6.28318
+        r = 20 + _lcg(i * 3 + 2) ** 0.62 * 175
+        x, y = GAL_CX + r * 0.96 * math.cos(a), GAL_CY + r * 0.74 * math.sin(a)
+        if x < 250 or x > 828 or y < 34 or y > 386:
+            continue
+        sky.append(f'<circle class="star" cx="{x:.1f}" cy="{y:.1f}" '
+                   f'r="{0.6 + _lcg(i * 3 + 3) * 1.3:.2f}" fill="{GAL_PALE}" fill-opacity=".7" '
+                   f'style="animation-delay:{_lcg(i * 7 + 5) * 5:.2f}s"/>')
+
+    # orbits
+    for r in (72, 118, 164):
+        stars.append(f'<circle cx="{GAL_CX}" cy="{GAL_CY}" r="{r}" fill="none" stroke="{GAL_LILAC}" '
+                     f'stroke-opacity=".07" stroke-dasharray="2 7"/>')
+
+    # one star per repository, sunflower spiral so nothing overlaps
+    pts = []
+    for i in range(n):
+        ang = i * 2.399963
+        rad = 46 + 3.9 * i
+        pts.append((GAL_CX + rad * math.cos(ang),
+                    GAL_CY + rad * 0.78 * math.sin(ang),
+                    rad))
+
+    for i, r in enumerate(repos):
+        x, y, rad = pts[i]
+        col = color_of.get((r["primaryLanguage"] or {}).get("name"), GAL_VIOLET)
+        core = 8.2 if r["stargazerCount"] else 6.2
+        halo = ""
+        if r["stargazerCount"]:
+            halo = (f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{core * 2.6:.1f}" fill="{col}" '
+                    f'fill-opacity=".18"/>')
+        stars.append(f'{halo}<circle cx="{x:.1f}" cy="{y:.1f}" r="{core:.1f}" fill="{col}"/>'
+                     f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{core * 2.6:.1f}" fill="none" '
+                     f'stroke="{col}" stroke-opacity=".28"/>')
+
+    # labels for the five biggest, nudged apart
+    used = []
+    for i in leaders:
+        x, y, rad = pts[i]
+        right = x < GAL_CX + 30
+        while any(abs(y - u) < 14 for u in used):
+            y += 14
+        used.append(y)
+        name = fit(repos[i]["name"], 16)
+        tx = x + 16 if right else x - 16
+        anchor = "start" if right else "end"
+        stars.append(
+            f'<line x1="{x + 9:.1f}" y1="{y:.1f}" x2="{tx - (4 if right else -4):.1f}" y2="{y:.1f}" '
+            f'stroke="{GAL_LILAC}" stroke-opacity=".35"/>'
+            f'<text x="{tx:.1f}" y="{y - 1:.1f}" text-anchor="{anchor}" font-family="{MONO}" '
+            f'font-size="10" fill="{GAL_PALE}">{esc(name)}</text>'
+            f'<text x="{tx:.1f}" y="{y + 10:.1f}" text-anchor="{anchor}" font-family="{MONO}" '
+            f'font-size="9" fill="{GAL_LILAC}">&#9733; {repos[i]["stargazerCount"]}</text>')
+
+    body = card(28, 26, 804, 328, rx=20, stroke_op=".5")
+    body += (f'<text x="{GX}" y="52" font-family="{SANS}" font-size="11" font-weight="700" '
+             f'letter-spacing="2.2" fill="#7884f7">REPO GALAXY</text>'
+             f'<text x="{GX}" y="86" font-family="{SANS}" font-size="26" font-weight="800" '
+             f'fill="{GAL_PALE}">@{LOGIN}</text>'
+             f'<text x="{GX}" y="112" font-family="{SANS}" font-size="13" font-weight="600" '
+             f'fill="{GAL_LILAC}">{profile["totalStars"]} stars · {n} repositories</text>'
+             f'<text x="{GX}" y="134" font-family="{SANS}" font-size="11.5" '
+             f'fill="{GAL_LILAC}" fill-opacity=".85">Each star is a repository, sized by its '
+             f'stars.</text>'
+             f'<text x="{GX}" y="196" font-family="{SANS}" font-size="10" font-weight="700" '
+             f'letter-spacing="2" fill="{GAL_LILAC}">LANGUAGES</text>')
+    for i, lang in enumerate(langs[:4]):
+        y = 220 + i * 22
+        body += (f'<circle cx="{GX + 5}" cy="{y - 4}" r="3.4" fill="{lang["color"]}"/>'
+                 f'<text x="{GX + 18}" y="{y}" font-family="{SANS}" font-size="12" '
+                 f'font-weight="700" fill="{GAL_PALE}">{esc(lang["name"])}</text>'
+                 f'<text x="{GX + 168}" y="{y}" text-anchor="end" font-family="{MONO}" '
+                 f'font-size="11" fill="{GAL_LILAC}">{lang["percentage"]}%</text>')
+    body += "".join(sky) + "".join(stars)
+
+    return shell(uid, H, f'Repo galaxy — {n} repositories, {profile["totalStars"]} stars',
+                 "Repo galaxy", body)
+
+
 # ------------------------------------------------------------- heatmaps
 
 def grid(weeks, gy=GY):
@@ -456,12 +637,14 @@ def build_readme(repos, st):
     return (
         '<div align="center">\n\n'
         f'<img src="assets/hero.svg" width="860" alt="Shalem Raj (@{LOGIN}) profile card">\n\n'
-        f'<img src="assets/space-shooter.svg" width="860" alt="Contribution space shooter '
-        f'— {st["total"]} contributions, {st["active"]} active days">\n\n'
+        f'<img src="assets/city.svg" width="860" alt="Contribution city — {st["total"]} '
+        f'contributions, {st["active"]} active days">\n\n'
+        f'<img src="assets/space-shooter.svg" width="860" alt="Contribution space shooter — '
+        f'{st["total"]} contributions, {st["active"]} active days">\n\n'
+        f'<img src="assets/galaxy.svg" width="860" alt="Repo galaxy — every repository as a star, '
+        f'sized by its stars">\n\n'
         f'<img src="assets/projects.svg" width="860" alt="Projects">\n\n'
         f"<sub>{links}</sub>\n\n"
-        f'<img src="assets/snake.svg" width="860" alt="Snake trail — {st["total"]} contributions, '
-        f'best run {st["best"]} days">\n\n'
         f'<img src="assets/social.svg" width="860" alt="GitHub @{LOGIN}">\n\n'
         "</div>\n"
     )
@@ -496,13 +679,14 @@ def main():
     picks = sorted(live, key=lambda r: (r["stargazerCount"], r["pushedAt"]), reverse=True)[:4]
 
     (OUT / "hero.svg").write_text(build_hero(profile, top_langs, st), encoding="utf-8")
-    (OUT / "projects.svg").write_text(build_projects(picks, top_langs), encoding="utf-8")
+    (OUT / "city.svg").write_text(build_city(weeks, st), encoding="utf-8")
     (OUT / "space-shooter.svg").write_text(build_shooter(weeks, st, start, last), encoding="utf-8")
-    (OUT / "snake.svg").write_text(build_snake(weeks, st, start, last), encoding="utf-8")
+    (OUT / "galaxy.svg").write_text(build_galaxy(live, top_langs, profile), encoding="utf-8")
+    (OUT / "projects.svg").write_text(build_projects(picks, top_langs), encoding="utf-8")
     (OUT / "social.svg").write_text(build_social(), encoding="utf-8")
     (ROOT / "README.md").write_text(build_readme(picks, st), encoding="utf-8")
 
-    print(f'wrote 5 cards · {st["total"]} contributions · {st["active"]} active days · '
+    print(f'wrote 6 cards · {st["total"]} contributions · {st["active"]} active days · '
           f'{len(live)} repos · {profile["totalStars"]} stars')
     for r in picks:
         print(f'  {r["name"]:<34}{(r["primaryLanguage"] or {}).get("name", "-"):<12}'
