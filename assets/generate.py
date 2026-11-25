@@ -189,7 +189,7 @@ def build_hero(profile, langs, st):
     uid, H = "hero", 240
     av = avatar_b64(profile["avatarUrl"])
     name = esc(profile["name"] or LOGIN)
-    bio = fit(profile["bio"], 78)
+    bio = fit(profile["bio"], 64)
 
     chips, x = [], 166
     for lang in langs[:4]:
