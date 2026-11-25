@@ -26,3 +26,4 @@
 </div>
 
 <sub>Cards are generated from public GitHub data — regenerate with `python assets/generate.py`.</sub>
+<!-- profile readme -->
