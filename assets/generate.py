@@ -64,11 +64,14 @@ MOTION = (
 @keyframes fc{0%,100%{transform:translate(0,0) scale(1);opacity:.34}50%{transform:translate(18px,-12px) scale(1.18);opacity:.62}}
 </style>"""),
     (("chip",), """<style>
-.chip{animation:rise .5s cubic-bezier(.16,1,.3,1) both}
+.chip{animation:spring .62s cubic-bezier(.34,1.56,.64,1) both;transform-box:fill-box;
+transform-origin:center}
 .chip:nth-of-type(2){animation-delay:.07s}
 .chip:nth-of-type(3){animation-delay:.14s}
 .chip:nth-of-type(4){animation-delay:.21s}
-@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spring{0%{opacity:0;transform:translateY(7px) scale(.82)}
+55%{opacity:1;transform:translateY(0) scale(1.06)}
+78%{transform:scale(.985)}100%{opacity:1;transform:translateY(0) scale(1)}}
 </style>"""),
     (("bld",), """<style>
 .bld{animation:grow .9s cubic-bezier(.2,.75,.3,1) both}
@@ -80,6 +83,10 @@ MOTION = (
 </style>"""),
     (("trail",), """<style>
 .trail{stroke-dasharray:1;stroke-dashoffset:1;animation:draw 9s linear infinite}
+.slash{stroke-dasharray:.055 .945;stroke-dashoffset:.06;animation:slash 9s linear infinite;opacity:0}
+@keyframes slash{0%{stroke-dashoffset:.06;opacity:0}
+4%{opacity:1}78%{stroke-dashoffset:-.9;opacity:1}
+82%,100%{stroke-dashoffset:-.9;opacity:0}}
 @keyframes draw{0%{stroke-dashoffset:1;opacity:.9}82%{stroke-dashoffset:0;opacity:.9}97%,100%{stroke-dashoffset:0;opacity:0}}
 </style>"""),
     (("ship", "laser"), """<style>
@@ -89,8 +96,12 @@ MOTION = (
 @keyframes fire{0%{transform:translateY(0);opacity:0}10%{opacity:1}80%{opacity:.9}100%{transform:translateY(-96px);opacity:0}}
 </style>"""),
     (("boom",), """<style>
-.boom{opacity:0;animation:boom 5.5s ease-out infinite}
-@keyframes boom{0%,72%{opacity:0;transform:scale(.2)}78%{opacity:.9;transform:scale(1)}88%,100%{opacity:0;transform:scale(1.7)}}
+.boom{opacity:0;animation:burst 5.5s ease-out infinite;transform-box:fill-box;
+transform-origin:center}
+@keyframes burst{0%,70%{opacity:0;transform:scale(.25) rotate(0deg)}
+76%{opacity:1;transform:scale(1) rotate(11deg)}
+84%{opacity:.7;transform:scale(1.35) rotate(16deg)}
+92%,100%{opacity:0;transform:scale(1.6) rotate(20deg)}}
 </style>"""),
     (("star",), """<style>
 .star{animation:twinkle 6s ease-in-out infinite}
@@ -101,8 +112,14 @@ MOTION = (
 @keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 </style>"""),
     (("bar",), """<style>
-.bar{animation:barin 1.1s cubic-bezier(.16,1,.3,1) both;transform-box:fill-box;transform-origin:left}
-@keyframes barin{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.bar{animation:surge 1.6s cubic-bezier(.22,1.4,.36,1) both;transform-box:fill-box;
+transform-origin:left}
+@keyframes surge{0%{transform:scaleX(0)}
+34%{transform:scaleX(.58)}
+40%{transform:scaleX(.55)}
+70%{transform:scaleX(.92)}
+86%{transform:scaleX(1.035)}
+100%{transform:scaleX(1)}}
 </style>"""),
     (("cursor",), """<style>
 .cursor{animation:blink 1.1s step-end infinite}
@@ -552,9 +569,12 @@ def build_snake(weeks, st, start, last):
     body += head("Snake trail", f"{st['active']} active days")
     body += "".join(cells)
     body += (f'<path class="trail" d="{path}" fill="none" stroke="url(#{uid}-trail)" '
-             f'stroke-width="4" stroke-linecap="round" stroke-linejoin="round" pathLength="1" '
-             f'filter="url(#{uid}-glow)"/>'
-             f'<circle r="5" fill="#ffffff" filter="url(#{uid}-glow)">'
+                 f'stroke-width="4" stroke-linecap="round" stroke-linejoin="round" pathLength="1" '
+                 f'filter="url(#{uid}-glow)"/>'
+                 f'<path class="slash" d="{path}" fill="none" stroke="#ffffff" stroke-width="5" '
+                 f'stroke-linecap="round" stroke-linejoin="round" pathLength="1" '
+                 f'filter="url(#{uid}-glow)"/>'
+                 f'<circle r="5" fill="#ffffff" filter="url(#{uid}-glow)">'
              f'<animateMotion dur="9s" repeatCount="indefinite" path="{path}" '
              f'keyPoints="0;1;1" keyTimes="0;0.82;1" calcMode="linear"/></circle>')
     return shell(uid, H, f'Snake trail through {st["total"]} contributions over {st["active"]} '
@@ -566,11 +586,17 @@ def build_shooter(weeks, st):
     uid, H = "shooter", 264
     lit = [(w, d, c) for w, col in enumerate(weeks) for d, c in enumerate(col)
            if c and c["l"] > 0]
+    rays = "".join(f'<line x1="0" y1="-5" x2="0" y2="-13" transform="rotate({a})"/>'
+                   for a in range(0, 360, 45))
+    rays = "".join(f'<line x1="0" y1="-5" x2="0" y2="-13" transform="rotate({a})"/>'
+                   for a in range(0, 360, 45))
     booms = "".join(
-        f'<rect class="boom" x="{GX + w * PITCH - 3}" y="{GY + d * PITCH - 3}" '
-        f'width="{CELL + 6}" height="{CELL + 6}" rx="4" fill="{ACCENT}" '
-        f'style="animation-delay:{(i * 1.9) % 5.5:.2f}s"/>'
+        f'<g transform="translate({GX + w * PITCH + CELL / 2:.1f} {GY + d * PITCH + CELL / 2:.1f})">'
+        f'<g class="boom" stroke="{ACCENT}" stroke-width="1.8" stroke-linecap="round" '
+        f'style="animation-delay:{(i * 1.9) % 5.5:.2f}s">'
+        f'{rays}<circle r="2.6" fill="{ACCENT}" stroke="none"/></g></g>'
         for i, (w, d, _) in enumerate(lit[:: max(1, len(lit) // 7)][:6]))
+
     stars = "".join(
         f'<circle class="star" cx="{GX + (i * 97) % 730 + 4}" cy="{94 + (i * 53) % 116}" '
         f'r="{1 + (i % 3) * 0.5:.1f}" fill="{INK}" style="animation-delay:{i * 0.7:.1f}s"/>'
