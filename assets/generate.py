@@ -7,8 +7,8 @@ Hallmark · genre: atmospheric · world: arcade HUD · theme: GitHub dark
 
 Usage:  python assets/generate.py
 Needs:  `gh` logged in (repo + language data), stdlib only.
-Writes: hero.svg, city.svg, projects.svg, space-shooter.svg, galaxy.svg,
-        snake.svg, resume.svg, social.svg, README.md
+Writes: hero.svg, resume.svg, work.svg, city.svg, projects.svg, galaxy.svg,
+        arcade.svg, social.svg, README.md
 
 One design system for all eight cards: five type steps, one baseline, one
 inset panel, one heading spec, one motion language. Tokens live below.
@@ -437,6 +437,43 @@ def build_projects(repos):
     return shell(uid, H, f'Projects — {", ".join(r["name"] for r in repos[:4])}', "Projects", body)
 
 
+# ---------------------------------------------------------------- work
+
+WORK = (
+    ("AnthyOS", "CI/CD translation — TeamCity and Jenkins pipelines to GitHub Actions",
+         "16m22s → 10m32s", "$1.26 → $0.22 a run"),
+    ("Ruchi", "Voice kitchen companion — stateful LangGraph agents and cached speech",
+     "~0 ms vs ~1200 ms", "cached vs fresh TTS"),
+    ("Career Portal", "Résumés in, structured profiles and AI scores out, matched to roles",
+     "resume → score", "React · Flask · MySQL"),
+    ("AnySite", "A problem in, a tool sequence out — RAG recommendation workflow",
+     "problem → tools", "React · Flask · n8n"),
+)
+
+
+def build_work():
+    uid, H = "work", 346
+    body = card(CARD_X, CARD_Y, W - 2 * CARD_X, 294)
+    body += head("Work", "4 outcomes")
+    for i, (name, what, outcome, note) in enumerate(WORK):
+        y = 126 + i * 52
+        body += (f'<g class="badge" style="animation-delay:{0.12 + i * 0.08:.2f}s">'
+                 f'<text x="{GUTTER}" y="{y}" font-family="{SANS}" font-size="15" font-weight="700" '
+                 f'fill="{INK}">{esc(name)}</text>'
+                 f'<text x="{W - GUTTER}" y="{y}" text-anchor="end" font-family="{MONO}" '
+                 f'font-size="13" font-weight="700" fill="{ACCENT}">{esc(outcome)}</text>'
+                 f'{label(GUTTER, y + 18, fit(what, 74), INK2, 12, "0.2")}'
+                 f'<text x="{W - GUTTER}" y="{y + 18}" text-anchor="end" font-family="{MONO}" '
+                 f'font-size="{T_DATA}" fill="{INK2}">{esc(note)}</text></g>')
+        if i < len(WORK) - 1:
+            body += (f'<line x1="{GUTTER}" y1="{y + 32}" x2="{W - GUTTER}" y2="{y + 32}" '
+                     f'stroke="{RULE}" stroke-opacity=".6"/>')
+    alt = ("Work: AnthyOS cut pipeline runtime 16m22s to 10m32s and cost $1.26 to $0.22 a run; "
+           "Ruchi serves cached speech in ~0 ms against ~1200 ms; Career Portal turns résumés into "
+           "AI scores against roles; AnySite turns a problem into a tool sequence.")
+    return shell(uid, H, alt, "Work: 4 outcomes", body)
+
+
 # --------------------------------------------------------------- galaxy
 
 GAL_CX, GAL_CY = 572, 234
@@ -711,6 +748,41 @@ def build_social():
     return shell(uid, H, f'GitHub and the interactive site — {SITE}', f'GitHub @{LOGIN}', body)
 
 
+# ---------------------------------------------------------------- arcade
+
+ARCADE = (
+    ("Pinball UI", "pinball controls", "#ff7a68"),
+    ("Pixel worlds", "pixel-art scenes", "#7ee787"),
+    ("Bubble wrap", "43k bubbles, 3D", "#5fe6ff"),
+    ("Cockpit UI", "cockpit status", "#ffc93a"),
+)
+
+
+def build_arcade():
+    uid, H = "arcade", 276
+    body = card(CARD_X, CARD_Y, W - 2 * CARD_X, 224)
+    body += head("Arcade", "4 playable sets")
+    for i, (name, what, col) in enumerate(ARCADE):
+        x, y, pw, ph = GUTTER + i * 196, 96, 180, 132
+        body += (f'<g class="badge" style="animation-delay:{0.12 + i * 0.08:.2f}s">'
+                 f'<rect x="{x}" y="{y}" width="{pw}" height="{ph}" rx="14" fill="{PANEL}" stroke="{RULE}"/>'
+                 f'<rect x="{x}" y="{y}" width="{pw}" height="3" rx="1.5" fill="{col}" fill-opacity=".9"/>'
+                 f'<text x="{x + 14}" y="{y + 30}" font-family="{SANS}" font-size="13.5" '
+                 f'font-weight="700" fill="{INK}">{esc(name)}</text>'
+                 f'{label(x + 14, y + 48, what, INK2, 10, "0.4")}'
+                 f'<rect x="{x + 14}" y="{y + 60}" width="{pw - 28}" height="34" rx="8" fill="{col}" '
+                 f'fill-opacity=".08" stroke="{col}" stroke-opacity=".28"/>'
+                 f'<text x="{x + pw / 2}" y="{y + 82}" text-anchor="middle" font-family="{MONO}" '
+                 f'font-size="13" fill="{col}">&#9654;</text>'
+                 f'<rect x="{x + 14}" y="{y + 104}" width="62" height="20" rx="10" fill="{col}" '
+                 f'fill-opacity=".12" stroke="{col}" stroke-opacity=".4"/>'
+                 f'<text x="{x + 45}" y="{y + 118}" text-anchor="middle" font-family="{MONO}" '
+                 f'font-size="10" letter-spacing="1.2" fill="{col}">PLAY</text></g>')
+    alt = ("Arcade — four playable UI sets borrowed from finktheartist: pinball controls, pixel "
+           "worlds, bubble wrap and a cockpit status display, all live on the site.")
+    return shell(uid, H, alt, "Arcade: 4 playable sets", body)
+
+
 # --------------------------------------------------------------- write
 
 DETAILS = """
@@ -758,26 +830,27 @@ def build_readme(repos, st):
         f'full-stack and AI, Visakhapatnam">\n\n'
         f'<sub><a href="{SITE}"><b>\u2192 the interactive version</b></a> \u2014 same data, '
         f'with a console you can actually use</sub>\n\n'
-        f'<img src="assets/city.svg" width="860" alt="Contributions this year drawn as a city '
-        f'skyline: {st["total"]} contributions over {st["active"]} active days, busiest day '
-        f'{st["bestdayn"]}, best run {st["best"]} days">\n\n'
-        f'<img src="assets/space-shooter.svg" width="860" alt="The same contribution grid as a '
-        f'space shooter, score {st["total"]:04d}">\n\n'
-        f'<img src="assets/galaxy.svg" width="860" alt="Every public repository as a star, '
-        f'sized by its star count">\n\n'
-        f'<img src="assets/projects.svg" width="860" alt="Projects: '
-        f'{", ".join(r["name"] for r in repos[:4])}">\n\n'
-        f"<sub>{links}</sub>\n\n"
-        f'<img src="assets/snake.svg" width="860" alt="A trail through {st["total"]} '
-        f'contributions across {st["active"]} active days">\n\n'
         f'<img src="assets/resume.svg" width="860" alt="Profile: B.Tech in Information '
         f'Technology at Anil Neerukonda Institute of Technology and Sciences, Visakhapatnam, '
         f'CGPA 8.69 of 10, 2022 to 2026; email rajshalem72@gmail.com; president of the '
         f'Entrepreneurship Club; Smart India Hackathon 2025">\n\n'
-        f'<a href="{SITE}/cockpit/"><img src="assets/cockpit-agent.gif" width="640" '
-        f'alt="Agent state \u2014 a cockpit-style status display. Click to use it."></a>\n\n'
-        f'<sub><a href="{SITE}/cockpit/"><b>\u2192 play with it</b></a> \u2014 the status '
-        f'display is live; click through its six states</sub>\n\n'
+        f'<img src="assets/work.svg" width="860" alt="Work: AnthyOS cut pipeline runtime 16m22s '
+        f'to 10m32s and cost $1.26 to $0.22 a run; Ruchi serves cached speech in ~0 ms against '
+        f'~1200 ms; Career Portal turns r\u00e9sum\u00e9s into AI scores against roles; AnySite '
+        f'turns a problem into a tool sequence.">\n\n'
+        f'<img src="assets/city.svg" width="860" alt="Contributions this year drawn as a city '
+        f'skyline: {st["total"]} contributions over {st["active"]} active days, busiest day '
+        f'{st["bestdayn"]}, best run {st["best"]} days">\n\n'
+        f'<img src="assets/projects.svg" width="860" alt="Projects: '
+        f'{", ".join(r["name"] for r in repos[:4])}">\n\n'
+        f"<sub>{links}</sub>\n\n"
+        f'<img src="assets/galaxy.svg" width="860" alt="Every public repository as a star, '
+        f'sized by its star count">\n\n'
+        f'<img src="assets/arcade.svg" width="860" alt="Arcade \u2014 four playable UI sets '
+        f'borrowed from finktheartist: pinball controls, pixel worlds, bubble wrap and a '
+        f'cockpit status display">\n\n'
+        f'<sub><a href="{SITE}/arcade/"><b>\u2192 play the arcade</b></a> \u2014 pinball, pixel '
+        f'worlds, bubble wrap and a cockpit status display, live in the browser</sub>\n\n'
         f'<img src="assets/social.svg" width="860" alt="GitHub @{LOGIN}">\n\n'
         "</div>\n" + DETAILS
     )
@@ -814,12 +887,12 @@ def main():
                                         r["pushedAt"]), reverse=True)[:4]
 
     (OUT / "hero.svg").write_text(build_hero(profile, top_langs, st), encoding="utf-8")
+    (OUT / "resume.svg").write_text(build_resume(profile, st), encoding="utf-8")
+    (OUT / "work.svg").write_text(build_work(), encoding="utf-8")
     (OUT / "city.svg").write_text(build_city(weeks, st), encoding="utf-8")
-    (OUT / "space-shooter.svg").write_text(build_shooter(weeks, st), encoding="utf-8")
     (OUT / "galaxy.svg").write_text(build_galaxy(live, top_langs, profile), encoding="utf-8")
     (OUT / "projects.svg").write_text(build_projects(picks), encoding="utf-8")
-    (OUT / "snake.svg").write_text(build_snake(weeks, st, start, last), encoding="utf-8")
-    (OUT / "resume.svg").write_text(build_resume(profile, st), encoding="utf-8")
+    (OUT / "arcade.svg").write_text(build_arcade(), encoding="utf-8")
     (OUT / "social.svg").write_text(build_social(), encoding="utf-8")
     (ROOT / "README.md").write_text(build_readme(picks, st), encoding="utf-8")
 

@@ -4,23 +4,21 @@
 
 <sub><a href="https://rajshalem5.github.io"><b>→ the interactive version</b></a> — same data, with a console you can actually use</sub>
 
-<img src="assets/city.svg" width="860" alt="Contributions this year drawn as a city skyline: 174 contributions over 36 active days, busiest day 34, best run 4 days">
+<img src="assets/resume.svg" width="860" alt="Profile: B.Tech in Information Technology at Anil Neerukonda Institute of Technology and Sciences, Visakhapatnam, CGPA 8.69 of 10, 2022 to 2026; email rajshalem72@gmail.com; president of the Entrepreneurship Club; Smart India Hackathon 2025">
 
-<img src="assets/space-shooter.svg" width="860" alt="The same contribution grid as a space shooter, score 0174">
+<img src="assets/work.svg" width="860" alt="Work: AnthyOS cut pipeline runtime 16m22s to 10m32s and cost $1.26 to $0.22 a run; Ruchi serves cached speech in ~0 ms against ~1200 ms; Career Portal turns résumés into AI scores against roles; AnySite turns a problem into a tool sequence.">
 
-<img src="assets/galaxy.svg" width="860" alt="Every public repository as a star, sized by its star count">
+<img src="assets/city.svg" width="860" alt="Contributions this year drawn as a city skyline: 179 contributions over 36 active days, busiest day 34, best run 4 days">
 
 <img src="assets/projects.svg" width="860" alt="Projects: POS-FOR-COLLEGE-CANTEEN, ANIMATED-PROFILE-CARD, Rajshalem5.github.io, RAG">
 
 <sub>[POS-FOR-COLLEGE-CANTEEN](https://github.com/Rajshalem5/POS-FOR-COLLEGE-CANTEEN) · [ANIMATED-PROFILE-CARD](https://github.com/Rajshalem5/ANIMATED-PROFILE-CARD) · [Rajshalem5.github.io](https://github.com/Rajshalem5/Rajshalem5.github.io) · [RAG](https://github.com/Rajshalem5/RAG)</sub>
 
-<img src="assets/snake.svg" width="860" alt="A trail through 174 contributions across 36 active days">
+<img src="assets/galaxy.svg" width="860" alt="Every public repository as a star, sized by its star count">
 
-<img src="assets/resume.svg" width="860" alt="Profile: B.Tech in Information Technology at Anil Neerukonda Institute of Technology and Sciences, Visakhapatnam, CGPA 8.69 of 10, 2022 to 2026; email rajshalem72@gmail.com; president of the Entrepreneurship Club; Smart India Hackathon 2025">
+<img src="assets/arcade.svg" width="860" alt="Arcade — four playable UI sets borrowed from finktheartist: pinball controls, pixel worlds, bubble wrap and a cockpit status display">
 
-<a href="https://rajshalem5.github.io/cockpit/"><img src="assets/cockpit-agent.gif" width="640" alt="Agent state — a cockpit-style status display. Click to use it."></a>
-
-<sub><a href="https://rajshalem5.github.io/cockpit/"><b>→ play with it</b></a> — the status display is live; click through its six states</sub>
+<sub><a href="https://rajshalem5.github.io/arcade/"><b>→ play the arcade</b></a> — pinball, pixel worlds, bubble wrap and a cockpit status display, live in the browser</sub>
 
 <img src="assets/social.svg" width="860" alt="GitHub @Rajshalem5">
 
